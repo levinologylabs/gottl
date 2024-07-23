@@ -10,14 +10,8 @@ type Config struct {
 	IdleTimeout    time.Duration `conf:"default:30s"`
 	ReadTimeout    time.Duration `conf:"default:10s"`
 	WriteTimeout   time.Duration `conf:"default:10s"`
-	TLSCert        string
-	TLSKey         string
 }
 
 func (cfg Config) Addr() string {
 	return cfg.Host + ":" + cfg.Port
-}
-
-func (cfg Config) EnableTLS() bool {
-	return cfg.TLSCert != "" && cfg.TLSKey != ""
 }

@@ -44,11 +44,6 @@ func (web *Web) Start(ctx context.Context) error {
 		_ = web.server.Shutdown(ctx)
 	}()
 
-	if web.cfg.EnableTLS() {
-		web.logger.Info().Msgf("starting web service on https://%s", web.cfg.Addr())
-		return web.server.ListenAndServeTLS(web.cfg.TLSCert, web.cfg.TLSKey)
-	}
-
 	web.logger.Info().Msgf("starting web service on http://%s", web.cfg.Addr())
 	return web.server.ListenAndServe()
 }
