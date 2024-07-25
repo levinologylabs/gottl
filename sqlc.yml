@@ -1,0 +1,35 @@
+version: "2"
+sql:
+  - engine: "postgresql"
+    queries: "internal/data/db/"
+    schema: "internal/data/db/migrations/sql"
+    gen:
+      go:
+        package: "db"
+        out: "internal/data/db"
+        sql_package: "pgx/v5"
+        emit_pointers_for_null_types: true
+        overrides:
+          # Use Googles UUID Package vs the default pgx UUID
+          - db_type: "uuid"
+            go_type:
+              import: "github.com/google/uuid"
+              type: "UUID"
+          # override time values to use time.Time instead of
+          # the default pgx time.Time wrapper type
+          - db_type: "pg_catalog.timestamp"
+            go_type:
+              type: "Time"
+              import: "time"
+          - db_type: "timestamp"
+            go_type:
+              type: "Time"
+              import: "time"
+          - db_type: "pg_catalog.timestamptz"
+            go_type:
+              type: "Time"
+              import: "time"
+          - db_type: "timestamptz"
+            go_type:
+              type: "Time"
+              import: "time"
