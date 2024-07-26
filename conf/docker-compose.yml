@@ -1,0 +1,19 @@
+services:
+  caddy:
+    image: caddy:latest
+    entrypoint: caddy run --config /root/Caddyfile
+    # environment:
+    # - CADDY_LOCAL_CA=1
+    #   HOST: "gottl.local"
+    # network_mode: "host"
+    volumes:
+      - $PWD/conf/Caddyfile:/root/Caddyfile
+      - $PWD/public:/srv
+      - caddy:/data
+    ports:
+      - "80:80"
+      - "443:443"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+volumes:
+  caddy:
