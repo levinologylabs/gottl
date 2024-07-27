@@ -12,6 +12,11 @@ import (
 	"github.com/rs/zerolog"
 )
 
+// AdvisoryLock is the advisory lock ID used to prevent multiple migrations
+// from running concurrently. This integer was randomly selected and has no
+// inherent meaning.
+var AdvisoryLock = 19234
+
 //go:embed sql
 var migrationFS embed.FS
 

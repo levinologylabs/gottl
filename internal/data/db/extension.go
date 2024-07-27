@@ -40,26 +40,17 @@ func (qe *QueriesExt) WithTx(ctx context.Context, fn func(*Queries) error) error
 }
 
 func NewExt(ctx context.Context, logger zerolog.Logger, config Config, runMigrations bool) (*QueriesExt, error) {
+	var conn *pgx.Conn
+	var err error
+
 	var (
 		retries = 5
 		wait    = 1
 		dsn     = config.DSN()
 	)
 
-	var err error
-
-	stdlibConn, err := sql.Open("pgx", dsn)
-	if err != nil {
-		return nil, err
-	}
-	defer stdlibConn.Close()
-
-	conn, err := pgx.Connect(ctx, dsn)
-	if err != nil {
-		return nil, err
-	}
-
 	for {
+		conn, err = pgx.Connect(ctx, dsn)
 		if err == nil {
 			err = conn.Ping(ctx)
 			if err == nil {
@@ -78,7 +69,44 @@ func NewExt(ctx context.Context, logger zerolog.Logger, config Config, runMigrat
 	}
 
 	if runMigrations {
-		err := migrations.Migrate(logger, stdlibConn)
+		var (
+			retries = 5
+			wait    = 5
+		)
+
+		for {
+			_, err = conn.Exec(ctx, "SELECT pg_advisory_lock($1)", migrations.AdvisoryLock)
+			if err != nil {
+
+				if retries == 0 {
+					return nil, err
+				}
+
+				retries--
+				logger.Warn().Err(err).Int("retries", retries).Msg("failed to obtain advisory lock, retrying...")
+				time.Sleep(time.Duration(wait) * time.Second)
+				wait *= 2
+				continue
+			}
+
+			logger.Info().Msg("obtained advisory lock for migrations")
+			defer func() {
+				_, err = conn.Exec(ctx, "SELECT pg_advisory_unlock($1)", migrations.AdvisoryLock)
+				if err != nil {
+					logger.Error().Err(err).Msg("failed to release advisory")
+				}
+			}()
+
+			break
+		}
+
+		stdlibConn, err := sql.Open("pgx", dsn)
+		if err != nil {
+			return nil, err
+		}
+		defer stdlibConn.Close()
+
+		err = migrations.Migrate(logger, stdlibConn)
 		if err != nil {
 			return nil, err
 		}
