@@ -20,12 +20,7 @@
 
   # redirect all api routes to gottl webserver
   route @api {
-    reverse_proxy host.docker.internal:8080 {
-      @error status 500 404
-      handle_response @error {
-        respond "Webserver broken {rp.status} - {rp.status_text} - {err.status_code}"
-      }
-    }
+    reverse_proxy host.docker.internal:8080
   }
 
   # notify us when upstream server is down
