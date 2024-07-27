@@ -34,6 +34,20 @@ func Migrate(log zerolog.Logger, db *sql.DB) error {
 	return nil
 }
 
+func Rollback(log zerolog.Logger, db *sql.DB) error {
+	goose.SetLogger(logger{log: log})
+
+	_ = goose.SetDialect("pgx")
+	goose.SetBaseFS(migrationFS)
+
+	if err := goose.Down(db, "sql"); err != nil {
+		return fmt.Errorf("failed to rollback sqlite migrations: %w", err)
+	}
+
+	log.Info().Msg("successfully rolled back sqlite migrations")
+	return nil
+}
+
 var _ goose.Logger = &logger{}
 
 type logger struct {
