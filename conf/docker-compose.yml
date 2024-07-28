@@ -1,0 +1,14 @@
+services:
+  caddy:
+    image: caddy:latest
+    entrypoint: caddy run --config /root/Caddyfile
+    volumes:
+      - $PWD/conf/Caddyfile.dev:/root/Caddyfile
+      - $PWD/public:/srv
+      - caddy:/data
+    ports:
+      - "80:80"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+volumes:
+  caddy:

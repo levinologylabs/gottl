@@ -1,0 +1,33 @@
+:80 {
+
+  log {
+    level DEBUG
+  }
+
+  # create matchers for frontend and apiserver
+  @frontend not path /api*
+  @api path /api*
+
+  # configure a basic fileserver
+  encode gzip zstd
+  file_server
+  root * /srv
+
+  # Used to redirect everything frontend to a SPA
+  #route @frontend {
+  #  try_files {path} index.html
+  #}
+
+  # redirect all api routes to gottl webserver
+  route @api {
+    reverse_proxy host.docker.internal:8080
+  }
+
+  # notify us when upstream server is down
+  handle_errors {
+    route @api {
+      respond "Webserver unavailable - make sure you've started your gottl application"
+    }
+  }
+
+}
