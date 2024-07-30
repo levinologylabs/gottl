@@ -9,6 +9,7 @@ import (
 	"os/signal"
 	"sync"
 
+	"github.com/jalevin/gottl/internal/data/db"
 	"github.com/jalevin/gottl/internal/observability/logtools"
 	"github.com/jalevin/gottl/internal/web"
 )
@@ -39,6 +40,17 @@ func run() error {
 
 	wg := sync.WaitGroup{}
 	wg.Add(1)
+
+	queries, err := db.NewExt(ctx, logger, cfg.Postgres, true)
+	if err != nil {
+		return err
+	}
+
+	defer func() {
+		if err := queries.Close(ctx); err != nil {
+			logger.Error().Err(err).Msg("closing queries")
+		}
+	}()
 
 	go func() {
 		defer wg.Done()

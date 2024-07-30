@@ -6,14 +6,16 @@ import (
 	"os"
 
 	"github.com/ardanlabs/conf/v3"
+	"github.com/jalevin/gottl/internal/data/db"
 	"github.com/jalevin/gottl/internal/observability/logtools"
 	"github.com/jalevin/gottl/internal/web"
 )
 
 type Config struct {
 	conf.Version
-	Web  web.Config
-	Logs logtools.Config
+	Web      web.Config
+	Logs     logtools.Config
+	Postgres db.Config
 }
 
 var (

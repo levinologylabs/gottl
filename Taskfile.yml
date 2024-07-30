@@ -38,3 +38,36 @@ tasks:
       - task: tidy
       - task: lint
       - task: test
+
+  db:migration:
+    desc: "Creates a new up/down migration ex: `task db:migration -- create_user_table`"
+    dir: ./internal/data/db/migrations/sql
+    cmds:
+      - goose create {{ .CLI_ARGS }} sql
+
+  db:up:
+    desc: "Runs the migration cli to apply all migrations"
+    cmds:
+      - go run ./cmd/cli/*.go migrate up
+
+  db:down:
+    desc: "Runs the migration cli to rollback the last migration"
+    cmds:
+      - go run ./cmd/cli/*.go migrate down
+
+  db:seed:
+    desc: "Runs the migration cli to seed the database"
+    cmds:
+      - go run ./cmd/cli/*.go seed
+
+  db:sqlc:
+    aliases: ["sqlc"]
+    desc: "Generate the sqlc code"
+    sources:
+      - ./internal/data/db/migrations/sql/*.sql
+      - ./internal/data/db/*.sql
+      - ./sqlc.yml
+    generates:
+      - ./internal/data/db/*.go
+    cmds:
+      - sqlc generate
