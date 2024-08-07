@@ -6,6 +6,9 @@ dotenv:
 tasks:
   run:
     desc: Runs the main application and supports passing CLI args
+    deps:
+      - db:sqlc
+      - swag
     cmds:
       - docker compose -f ./conf/docker-compose.yml up --detach
       - go run ./cmd/api/*.go {{ .CLI_ARGS }}
@@ -71,3 +74,15 @@ tasks:
       - ./internal/data/db/*.go
     cmds:
       - sqlc generate
+
+  swag:
+    desc: Generate swagger docs
+    sources:
+      - ./cmd/api/main.go
+      - ./internal/data/dtos/*.go
+      - ./internal/web/handlers/*.go
+    generates:
+      - ./internal/web/docs/swagger.json
+    cmds:
+      - swag fmt --dir=./internal
+      - swag init --outputTypes=json -g ./cmd/api/main.go --output=./internal/web/docs/

@@ -14,6 +14,14 @@ import (
 	"github.com/jalevin/gottl/internal/web"
 )
 
+// @title                      Gottl API
+// @version                    1.0
+// @description                This is a standard Rest API template
+// @BasePath                   /api
+// @securityDefinitions.apikey Bearer
+// @in                         header
+// @name                       Authorization
+// @description                "Type 'Bearer TOKEN' to correctly set the API Key"
 func main() {
 	if err := run(); err != nil {
 		fmt.Println(err)
@@ -36,7 +44,7 @@ func run() error {
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer cancel()
 
-	apisvr := web.New(cfg.Web, logger)
+	apisvr := web.New(cfg.Version.Build, cfg.Web, logger)
 
 	wg := sync.WaitGroup{}
 	wg.Add(1)

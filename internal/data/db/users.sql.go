@@ -10,13 +10,10 @@ import (
 )
 
 const createUser = `-- name: CreateUser :one
-INSERT INTO users (
-    username,
-    email,
-    password_hash
-)
-VALUES ($1, $2, $3)
-RETURNING id, created_at, updated_at, username, email, password_hash, stripe_customer_id, stripe_subscription_id, subscription_start_date, subscription_ended_date
+INSERT INTO
+    users (username, email, password_hash)
+VALUES
+    ($1, $2, $3) RETURNING id, created_at, updated_at, username, email, password_hash, stripe_customer_id, stripe_subscription_id, subscription_start_date, subscription_ended_date
 `
 
 type CreateUserParams struct {

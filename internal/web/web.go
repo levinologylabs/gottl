@@ -5,22 +5,28 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/jalevin/gottl/internal/data/dtos"
+	"github.com/jalevin/gottl/internal/web/docs"
+	"github.com/jalevin/gottl/internal/web/handlers"
 	"github.com/rs/zerolog"
 )
 
 type Web struct {
+	build  string
 	cfg    Config
 	server *http.Server
 	logger zerolog.Logger
 }
 
 func New(
+	build string,
 	conf Config,
 	logger zerolog.Logger,
 ) *Web {
-	mux := routes()
+	mux := routes(build)
 
 	w := &Web{
+		build:  build,
 		logger: logger,
 		cfg:    conf,
 		server: &http.Server{
@@ -48,13 +54,14 @@ func (web *Web) Start(ctx context.Context) error {
 	return web.server.ListenAndServe()
 }
 
-func routes() *http.ServeMux {
+func routes(build string) *http.ServeMux {
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("/api/v1/status", func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-		_, _ = w.Write([]byte(`{"status":"ok"}`))
-	})
+	mux.HandleFunc("/docs/swagger.json", docs.SwaggerJSON)
+
+	mux.HandleFunc("/api/v1/info", handlers.Info(dtos.StatusResponse{
+		Build: build,
+	}))
 
 	return mux
 }
