@@ -61,9 +61,8 @@ func (web *Web) routes(build string) *http.ServeMux {
 
 	adapter := mid.ErrorHandler(web.logger)
 
-	mux.HandleFunc("/docs/swagger.json", adapter.Adapt(docs.SwaggerJSON))
-
-	mux.HandleFunc("/api/v1/info", adapter.Adapt(handlers.Info(dtos.StatusResponse{Build: build})))
+	mux.HandleFunc("GET /docs/swagger.json", adapter.Adapt(docs.SwaggerJSON))
+	mux.HandleFunc("GET /api/v1/info", adapter.Adapt(handlers.Info(dtos.StatusResponse{Build: build})))
 
 	return mux
 }
