@@ -3,7 +3,7 @@ package handlers
 import (
 	"net/http"
 
-	"github.com/hay-kot/httpkit/server"
+	"github.com/jalevin/gottl/internal/core/server"
 	"github.com/jalevin/gottl/internal/data/dtos"
 )
 
