@@ -8,6 +8,7 @@ import (
 	"github.com/jalevin/gottl/internal/data/dtos"
 	"github.com/jalevin/gottl/internal/web/docs"
 	"github.com/jalevin/gottl/internal/web/handlers"
+	"github.com/jalevin/gottl/internal/web/mid"
 	"github.com/rs/zerolog"
 )
 
@@ -23,19 +24,20 @@ func New(
 	conf Config,
 	logger zerolog.Logger,
 ) *Web {
-	mux := routes(build)
-
 	w := &Web{
 		build:  build,
 		logger: logger,
 		cfg:    conf,
-		server: &http.Server{
-			Handler:      mux,
-			Addr:         conf.Addr(),
-			IdleTimeout:  conf.IdleTimeout,
-			ReadTimeout:  conf.ReadTimeout,
-			WriteTimeout: conf.WriteTimeout,
-		},
+	}
+
+	mux := w.routes(build)
+
+	w.server = &http.Server{
+		Handler:      mux,
+		Addr:         conf.Addr(),
+		IdleTimeout:  conf.IdleTimeout,
+		ReadTimeout:  conf.ReadTimeout,
+		WriteTimeout: conf.WriteTimeout,
 	}
 
 	return w
@@ -54,14 +56,14 @@ func (web *Web) Start(ctx context.Context) error {
 	return web.server.ListenAndServe()
 }
 
-func routes(build string) *http.ServeMux {
+func (web *Web) routes(build string) *http.ServeMux {
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("/docs/swagger.json", docs.SwaggerJSON)
+	adapter := mid.ErrorHandler(web.logger)
 
-	mux.HandleFunc("/api/v1/info", handlers.Info(dtos.StatusResponse{
-		Build: build,
-	}))
+	mux.HandleFunc("/docs/swagger.json", adapter.Adapt(docs.SwaggerJSON))
+
+	mux.HandleFunc("/api/v1/info", adapter.Adapt(handlers.Info(dtos.StatusResponse{Build: build})))
 
 	return mux
 }

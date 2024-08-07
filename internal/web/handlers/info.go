@@ -1,9 +1,9 @@
 package handlers
 
 import (
+	"errors"
 	"net/http"
 
-	"github.com/jalevin/gottl/internal/core/server"
 	"github.com/jalevin/gottl/internal/data/dtos"
 )
 
@@ -16,8 +16,9 @@ import (
 //	@Produce		json
 //	@Success		200	{object}	dtos.StatusResponse
 //	@Router			/api/v1/status [GET]
-func Info(resp dtos.StatusResponse) func(w http.ResponseWriter, r *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
-		_ = server.JSON(w, http.StatusOK, resp)
+func Info(resp dtos.StatusResponse) func(w http.ResponseWriter, r *http.Request) error {
+	return func(w http.ResponseWriter, r *http.Request) error {
+		return errors.New("not implemented")
+		// return server.JSON(w, http.StatusOK, resp)
 	}
 }
