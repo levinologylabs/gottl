@@ -23,7 +23,7 @@ func New(
 	conf Config,
 	logger zerolog.Logger,
 ) *Web {
-	mux := routes(build)
+	mux := routes(logger, build)
 
 	w := &Web{
 		build:  build,
@@ -54,12 +54,12 @@ func (web *Web) Start(ctx context.Context) error {
 	return web.server.ListenAndServe()
 }
 
-func routes(build string) *http.ServeMux {
+func routes(logger zerolog.Logger, build string) *http.ServeMux {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/docs/swagger.json", docs.SwaggerJSON)
 
-	mux.HandleFunc("/api/v1/info", handlers.Info(dtos.StatusResponse{
+	mux.HandleFunc("/api/v1/info", handlers.Info(logger, dtos.StatusResponse{
 		Build: build,
 	}))
 

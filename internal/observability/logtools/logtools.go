@@ -41,17 +41,21 @@ func New(cfg Config) (zerolog.Logger, error) {
 		Logger().
 		Level(lvl)
 
-	// setup loki
-	// Configure the Loki hook
+	l = l.Hook(newLokiHook())
+
+	return l, nil
+}
+
+// Configure the Loki hook
+func newLokiHook() *LogrusLokiWrapper {
 	opts := lokirus.NewLokiHookOptions().
 		// Grafana doesn't have a "panic" level, but it does have a "critical" level
 		// https://grafana.com/docs/grafana/latest/explore/logs-integration/
 		WithLevelMap(lokirus.LevelMap{logrus.PanicLevel: "critical"}).
 		WithStaticLabels(lokirus.Labels{
-			"app":         "example",
+			"app":         "gottl",
 			"environment": "development",
-		}).
-		WithBasicAuth("admin", "secretpassword") // Optional
+		})
 
 	lg := lokirus.NewLokiHookWithOpts(
 		"http://localhost:3100",
@@ -59,11 +63,9 @@ func New(cfg Config) (zerolog.Logger, error) {
 		logrus.InfoLevel,
 		logrus.WarnLevel,
 		logrus.ErrorLevel,
-		logrus.FatalLevel)
-
-	l.Hook(&LogrusLokiWrapper{Logrus: lg})
-
-	return l, nil
+		logrus.FatalLevel,
+	)
+	return &LogrusLokiWrapper{Logrus: lg}
 }
 
 // experimental. ship logs to loki
@@ -72,11 +74,12 @@ type LogrusLokiWrapper struct {
 }
 
 func (hook *LogrusLokiWrapper) Run(e *zerolog.Event, level zerolog.Level, message string) {
+
 	// TODO convert from zerolog to logrus entry
 	entry := &logrus.Entry{
 		Time:    time.Now(),
 		Level:   logrus.InfoLevel,
-		Message: "TEST!",
+		Message: message,
 	}
 
 	if err := hook.Logrus.Fire(entry); err != nil {
