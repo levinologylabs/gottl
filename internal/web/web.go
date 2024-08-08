@@ -61,7 +61,6 @@ func (web *Web) Start(ctx context.Context) error {
 
 func (web *Web) routes(build string) http.Handler {
 	mux := chi.NewRouter()
-	mux.Use(middleware.Logger)
 	mux.Use(
 		middleware.Recoverer,
 		middleware.RealIP,
