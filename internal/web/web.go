@@ -5,7 +5,9 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/jalevin/gottl/internal/core/server"
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
+	"github.com/go-chi/cors"
 	"github.com/jalevin/gottl/internal/data/dtos"
 	"github.com/jalevin/gottl/internal/web/docs"
 	"github.com/jalevin/gottl/internal/web/handlers"
@@ -58,13 +60,34 @@ func (web *Web) Start(ctx context.Context) error {
 }
 
 func (web *Web) routes(build string) http.Handler {
-	mux := server.NewServeMux()
+	mux := chi.NewRouter()
+	mux.Use(middleware.Logger)
 	mux.Use(
+		middleware.Recoverer,
+		middleware.RealIP,
+		middleware.CleanPath,
+		middleware.StripSlashes,
 		mid.RequestID(),
 		mid.Logger(web.logger),
+		middleware.AllowContentType("application/json", "text/plain", "text/html"),
 	)
 
+	// Basic CORS
+	// for more ideas, see: https://developer.github.com/v3/#cross-origin-resource-sharing
+	mux.Use(cors.Handler(cors.Options{
+		AllowedOrigins:   web.cfg.Origins(),
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token", "X-Request-ID"},
+		ExposedHeaders:   []string{"Link"},
+		AllowCredentials: false,
+		MaxAge:           300, // Maximum value not ignored by any of major browsers
+	}))
+
 	adapter := mid.ErrorHandler(web.logger)
+
+	if web.cfg.EnableProfiler {
+		mux.Mount("/debug", middleware.Profiler())
+	}
 
 	mux.HandleFunc("GET /docs/swagger.json", adapter.Adapt(docs.SwaggerJSON))
 	mux.HandleFunc("GET /api/v1/info", adapter.Adapt(handlers.Info(dtos.StatusResponse{Build: build})))
