@@ -12,6 +12,7 @@ import (
 	"github.com/jalevin/gottl/internal/data/db"
 	"github.com/jalevin/gottl/internal/observability/logtools"
 	"github.com/jalevin/gottl/internal/web"
+	"github.com/jalevin/gottl/internal/web/mid"
 )
 
 // @title                      Gottl API
@@ -36,7 +37,7 @@ func run() error {
 		os.Exit(1)
 	}
 
-	logger, err := logtools.New(cfg.Logs)
+	logger, err := logtools.New(cfg.Logs, mid.RequestIDTraceHook{})
 	if err != nil {
 		return fmt.Errorf("creating logger: %w", err)
 	}
