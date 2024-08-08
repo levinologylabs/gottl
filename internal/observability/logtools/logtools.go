@@ -17,7 +17,7 @@ type Config struct {
 // This is used to simplify the creation of a logger in the main
 // function of an application and keep logs consistent across the
 // applications.
-func New(cfg Config) (zerolog.Logger, error) {
+func New(cfg Config, hooks ...zerolog.Hook) (zerolog.Logger, error) {
 	lvl, err := zerolog.ParseLevel(cfg.Level)
 	if err != nil {
 		return zerolog.Logger{}, err
@@ -36,7 +36,8 @@ func New(cfg Config) (zerolog.Logger, error) {
 		Caller().    // adds the file and line number of the caller
 		Timestamp(). // adds a timestamp to each log line
 		Logger().
-		Level(lvl)
+		Level(lvl).
+		Hook(hooks...)
 
 	return l, nil
 }

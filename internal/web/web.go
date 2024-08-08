@@ -5,6 +5,7 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/jalevin/gottl/internal/core/server"
 	"github.com/jalevin/gottl/internal/data/dtos"
 	"github.com/jalevin/gottl/internal/web/docs"
 	"github.com/jalevin/gottl/internal/web/handlers"
@@ -56,8 +57,12 @@ func (web *Web) Start(ctx context.Context) error {
 	return web.server.ListenAndServe()
 }
 
-func (web *Web) routes(build string) *http.ServeMux {
-	mux := http.NewServeMux()
+func (web *Web) routes(build string) http.Handler {
+	mux := server.NewServeMux()
+	mux.Use(
+		mid.RequestID(),
+		mid.Logger(web.logger),
+	)
 
 	adapter := mid.ErrorHandler(web.logger)
 
