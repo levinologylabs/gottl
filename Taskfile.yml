@@ -11,6 +11,7 @@ tasks:
       - go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
     silent: false
   run:
+    dir: "{{.TASKFILE_DIR}}"
     desc: Runs the main application and supports passing CLI args
     deps:
       - db:sqlc
@@ -19,6 +20,11 @@ tasks:
       - docker compose -f ./conf/docker-compose.yml up --detach
       - go run ./cmd/api/*.go {{ .CLI_ARGS }}
     silent: false
+  docker:
+    dir: "{{.TASKFILE_DIR}}"
+    desc: Runs docker compose with config. `task docker -- down` you must use the --
+    cmds:
+      - docker compose -f ./conf/docker-compose.yml {{ .CLI_ARGS }}
   build:
     desc: Builds the backend binary
     cmds:

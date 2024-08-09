@@ -16,10 +16,10 @@ import (
 //	@Accept			json
 //	@Produce		json
 //	@Success		200	{object}	dtos.StatusResponse
-//	@Router			/api/v1/status [GET]
+//	@Router			/api/v1/info [GET]
 func Info(logger zerolog.Logger, resp dtos.StatusResponse) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		logger.Info().Msg("info 1,2")
+		logger.Info().Msg("/api/v1/info")
 		_ = server.JSON(w, http.StatusOK, resp)
 	}
 }

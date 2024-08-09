@@ -8,7 +8,7 @@
     },
     "basePath": "/api",
     "paths": {
-        "/api/v1/status": {
+        "/api/v1/info": {
             "get": {
                 "description": "Get the status of the service",
                 "consumes": [

@@ -34,20 +34,25 @@ func New(cfg Config) (zerolog.Logger, error) {
 		logWriter = os.Stdout
 	}
 
-	l := zerolog.New(logWriter).
+	runLogFile, err := os.OpenFile("gottl.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0664)
+	if err != nil {
+		panic(err)
+	}
+
+	l := zerolog.New(zerolog.MultiLevelWriter(logWriter, runLogFile)).
 		With().
 		Caller().    // adds the file and line number of the caller
 		Timestamp(). // adds a timestamp to each log line
 		Logger().
 		Level(lvl)
 
-	l = l.Hook(newLokiHook())
+	//l = l.Hook(NewLokiHook())
 
 	return l, nil
 }
 
 // Configure the Loki hook
-func newLokiHook() *LogrusLokiWrapper {
+func NewLokiHook() *LogrusLokiWrapper {
 	opts := lokirus.NewLokiHookOptions().
 		// Grafana doesn't have a "panic" level, but it does have a "critical" level
 		// https://grafana.com/docs/grafana/latest/explore/logs-integration/
@@ -74,14 +79,33 @@ type LogrusLokiWrapper struct {
 }
 
 func (hook *LogrusLokiWrapper) Run(e *zerolog.Event, level zerolog.Level, message string) {
+	// convert zerolog level to proper logrus level
+	// skipping panic and trace level as those don't
+	// exist in logrus
+	var ll logrus.Level
+	switch level {
+	case zerolog.InfoLevel:
+		ll = logrus.InfoLevel
+	case zerolog.DebugLevel:
+		ll = logrus.DebugLevel
+	case zerolog.WarnLevel:
+		ll = logrus.WarnLevel
+	case zerolog.ErrorLevel:
+		ll = logrus.ErrorLevel
+	case zerolog.FatalLevel:
+		ll = logrus.FatalLevel
+	default:
+		ll = logrus.InfoLevel
+	}
 
-	// TODO convert from zerolog to logrus entry
+	// convert from zerolog to logrus entry
 	entry := &logrus.Entry{
 		Time:    time.Now(),
-		Level:   logrus.InfoLevel,
+		Level:   ll,
 		Message: message,
 	}
 
+	// maybe shouldn't panic if loki not available
 	if err := hook.Logrus.Fire(entry); err != nil {
 		panic(err)
 	}
