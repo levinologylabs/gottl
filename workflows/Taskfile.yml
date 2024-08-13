@@ -1,0 +1,10 @@
+version: "3"
+
+# Note: All workflows in the file execute as if they were in
+# _this_ directory, even when called from the parent task file.
+
+tasks:
+  test:
+    desc: Run all integration tests
+    cmds:
+      - dagger call test --source="./.." --integration=true

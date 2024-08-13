@@ -3,6 +3,11 @@ env:
   LOG_LEVEL: "debug"
 dotenv:
   - .env
+
+includes:
+  dag:
+    dir: ./workflows/
+    taskfile: ./workflows/Taskfile.yml
 tasks:
   run:
     desc: Runs the main application and supports passing CLI args
