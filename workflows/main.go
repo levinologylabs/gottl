@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"strconv"
 
 	"github.com/jalevin/gottl/workflows/internal/dagger"
 )
@@ -33,8 +34,7 @@ func (g *Workflows) TestEnv(source *dagger.Directory) *dagger.Container {
 	golang := g.dag.Container().
 		From(imageGolang).
 		WithServiceBinding("postgres", postgres).
-		WithEnvVariable("POSTGRES_PASSWORD", "postgres").
-		WithEnvVariable("POSTGRES_USER", "postgres").
+		WithEnvVariable("GOTTL_POSTGRES_HOST", "postgres").
 		WithDirectory("/src/", source).
 		WithWorkdir("/src/")
 
@@ -54,7 +54,7 @@ func (g *Workflows) Test(
 	// get the build environment container
 	// by calling another Dagger Function
 	return g.TestEnv(source).
-		WithEnvVariable("TEST_INTEGRATION", "true").
+		WithEnvVariable("TEST_INTEGRATION", strconv.FormatBool(integration)).
 		WithExec([]string{"go", "test", "./..."}).
 		Stdout(ctx)
 }
