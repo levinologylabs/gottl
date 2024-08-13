@@ -6,6 +6,14 @@ FROM
 WHERE
     id = $1;
 
+-- name: UserByEmail :one
+SELECT
+    *
+FROM
+    users
+WHERE
+    email = $1;
+
 -- name: UserCreate :one
 INSERT INTO
     users (username, email, password_hash)

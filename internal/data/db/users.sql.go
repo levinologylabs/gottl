@@ -12,6 +12,33 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const userByEmail = `-- name: UserByEmail :one
+SELECT
+    id, created_at, updated_at, username, email, password_hash, stripe_customer_id, stripe_subscription_id, subscription_start_date, subscription_ended_date
+FROM
+    users
+WHERE
+    email = $1
+`
+
+func (q *Queries) UserByEmail(ctx context.Context, email string) (User, error) {
+	row := q.db.QueryRow(ctx, userByEmail, email)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Username,
+		&i.Email,
+		&i.PasswordHash,
+		&i.StripeCustomerID,
+		&i.StripeSubscriptionID,
+		&i.SubscriptionStartDate,
+		&i.SubscriptionEndedDate,
+	)
+	return i, err
+}
+
 const userByID = `-- name: UserByID :one
 SELECT
     id, created_at, updated_at, username, email, password_hash, stripe_customer_id, stripe_subscription_id, subscription_start_date, subscription_ended_date

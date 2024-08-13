@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/jalevin/gottl/internal/data/db"
 )
 
 type User struct {
@@ -15,8 +16,8 @@ type User struct {
 
 	StripeCustomerID      *string   `json:"-"`
 	StripeSubscriptionID  *string   `json:"-"`
-	SubscriptionStartDate time.Time `json:"-"`
-	SubscriptionEndedDate time.Time `json:"-"`
+	SubscriptionStartDate time.Time `json:"subscriptionStartDate"`
+	SubscriptionEndedDate time.Time `json:"subscriptionEndedDate"`
 }
 
 // IsSubscribed is a proxy for IsSubscribedAt(time.Now())
@@ -44,6 +45,11 @@ type UserRegister struct {
 	Password string `json:"password" validate:"required,min=6,max=256"`
 }
 
+type UserAuthenticate struct {
+	Email    string `json:"email"    validate:"required,email"`
+	Password string `json:"password" validate:"required"`
+}
+
 type UserUpdate struct {
 	Email    *string `json:"email"    validate:"omitempty,email"`
 	Usenrame *string `json:"username" validate:"omitempty,min=6,max=128"`
@@ -55,4 +61,19 @@ type UserUpdateSubscription struct {
 	StripeSubscriptionID  *string    `json:"stripeSubscriptionId"`
 	SubscriptionStartDate *time.Time `json:"-"`
 	SubscriptionEndedDate *time.Time `json:"-"`
+}
+
+// MapUser maps a db user into a dto user type
+func MapUser(dbu db.User) User {
+	return User{
+		ID:                    dbu.ID,
+		CreatedAt:             dbu.CreatedAt,
+		UpdatedAt:             dbu.UpdatedAt,
+		Username:              dbu.Username,
+		Email:                 dbu.Email,
+		StripeCustomerID:      dbu.StripeCustomerID,
+		StripeSubscriptionID:  dbu.StripeSubscriptionID,
+		SubscriptionStartDate: dbu.SubscriptionStartDate.Time,
+		SubscriptionEndedDate: dbu.SubscriptionEndedDate.Time,
+	}
 }

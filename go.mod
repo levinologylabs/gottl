@@ -3,6 +3,7 @@ module github.com/jalevin/gottl
 go 1.22
 
 require (
+	github.com/alexedwards/argon2id v1.0.0
 	github.com/ardanlabs/conf/v3 v3.1.7
 	github.com/go-chi/chi/v5 v5.1.0
 	github.com/go-chi/cors v1.2.1

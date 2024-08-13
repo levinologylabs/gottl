@@ -2,12 +2,16 @@ package services
 
 import (
 	"context"
+	"errors"
 
 	"github.com/google/uuid"
+	"github.com/jalevin/gottl/internal/core/hasher"
 	"github.com/jalevin/gottl/internal/data/db"
 	"github.com/jalevin/gottl/internal/data/dtos"
 	"github.com/rs/zerolog"
 )
+
+var ErrInvalidLogin = errors.New("invalid password or username")
 
 type UserService struct {
 	l      zerolog.Logger
@@ -24,7 +28,47 @@ func NewUserService(l zerolog.Logger, db *db.QueriesExt) *UserService {
 }
 
 func (s *UserService) Register(ctx context.Context, data dtos.UserRegister) (dtos.User, error) {
-	panic("TODO")
+	pwHash, err := hasher.HashPassword(data.Password)
+	if err != nil {
+		return dtos.User{}, err
+	}
+
+	v, err := s.db.UserCreate(ctx, db.UserCreateParams{
+		Username:     data.Username,
+		Email:        data.Email,
+		PasswordHash: pwHash,
+	})
+	if err != nil {
+		return dtos.User{}, err
+	}
+
+	return s.mapper.Map(v), nil
+}
+
+// Authenticate validates a user's credentials and returns the user if they are valid.
+// If the credentials are invalid, an error is returned. This function uses a constant
+// time comparison to prevent timing attacks. When no use is found by the provided email
+// address, the same error is returned to prevent user enumeration.
+func (s *UserService) Authenticate(ctx context.Context, data dtos.UserAuthenticate) (dtos.User, error) {
+	dbsuer, err := s.db.UserByEmail(ctx, data.Email)
+	if err != nil {
+		// This is to prevent timing attacks ensuring that when no user is found we
+		// still perform the same amount of work as when a user is found.
+		//
+		// savedHash = ThisIsNotAStrongPassword?12!#$%@!@!@$ButItWorks
+		savedHash := "$argon2id$v=19$m=65536,t=1,p=8$r14KLB8NUVfFFccYbU1q9w$tJ3HvNwMED2dL3lALmOdkm46TVuB9vGcEjy9sxTAE6s"
+		hasher.CheckPasswordHash(data.Password, savedHash)
+
+		s.l.Error().Err(err).Str("email", data.Email).Msg("failed to get user by email")
+		return dtos.User{}, ErrInvalidLogin
+	}
+
+	if !hasher.CheckPasswordHash(data.Password, dbsuer.PasswordHash) {
+		s.l.Error().Err(err).Str("email", data.Email).Msg("password verification failed")
+		return dtos.User{}, ErrInvalidLogin
+	}
+
+	return s.mapper.Map(dbsuer), nil
 }
 
 // Get returns a single user by id from the database.
