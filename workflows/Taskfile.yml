@@ -4,6 +4,13 @@ version: "3"
 # _this_ directory, even when called from the parent task file.
 
 tasks:
+  prepare:
+    desc: Prepare the dagger environment
+    generates:
+      - ./internal/**
+    cmds:
+      - dagger develop
+
   test:
     desc: Run all integration tests
     cmds:
