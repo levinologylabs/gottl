@@ -18,6 +18,8 @@ CREATE TABLE IF NOT EXISTS users (
     subscription_ended_date TIMESTAMP
 );
 
+CREATE UNIQUE INDEX IF NOT EXISTS users_email_idx ON users (email);
+
 -- +goose StatementEnd
 -- +goose Down
 -- +goose StatementBegin

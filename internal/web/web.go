@@ -95,8 +95,16 @@ func (web *Web) routes(build string) http.Handler {
 	mux.HandleFunc("GET /docs/swagger.json", adapter.Adapt(docs.SwaggerJSON))
 	mux.HandleFunc("GET /api/v1/info", adapter.Adapt(handlers.Info(dtos.StatusResponse{Build: build})))
 
+	userctrl := handlers.NewAuthController(web.services.Users)
+
+	mux.HandleFunc("POST /api/v1/users", adapter.Adapt(userctrl.Register))
+	mux.HandleFunc("POST /api/v1/users/login", adapter.Adapt(userctrl.Authenticate))
+
 	mux.Group(func(r chi.Router) {
 		r.Use(mid.Authenticate(web.services.Users))
+
+		r.HandleFunc("GET /api/v1/users/self", adapter.Adapt(userctrl.Self))
+		r.HandleFunc("PATCH /api/v1/users/self", adapter.Adapt(userctrl.Update))
 	})
 
 	return mux

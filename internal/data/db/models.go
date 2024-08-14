@@ -23,3 +23,11 @@ type User struct {
 	SubscriptionStartDate pgtype.Timestamp
 	SubscriptionEndedDate pgtype.Timestamp
 }
+
+type UserSession struct {
+	ID        uuid.UUID
+	CreatedAt time.Time
+	UserID    uuid.UUID
+	Token     []byte
+	ExpiresAt time.Time
+}
