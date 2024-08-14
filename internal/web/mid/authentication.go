@@ -17,13 +17,20 @@ func Authenticate(userservice *services.UserService) func(http.Handler) http.Han
 			if bearer == "" {
 				_ = server.Error().
 					Status(http.StatusUnauthorized).
-					Msg("missing bearer token").
+					Msg("Authorization header is required").
 					Write(r.Context(), w)
 				return
 			}
 
-			// TODO: Implement the token validation
+			user, err := userservice.SessionVerify(r.Context(), bearer)
+			if err != nil {
+				_ = server.Error().
+					Status(http.StatusUnauthorized).
+					Msg("unauthorized").
+					Write(r.Context(), w)
+			}
 
+			r = r.WithContext(services.WithUser(r.Context(), user))
 			h.ServeHTTP(w, r)
 		})
 	}
