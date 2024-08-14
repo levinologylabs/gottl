@@ -11,6 +11,7 @@ import (
 
 	"github.com/jalevin/gottl/internal/data/db"
 	"github.com/jalevin/gottl/internal/observability/logtools"
+	"github.com/jalevin/gottl/internal/services"
 	"github.com/jalevin/gottl/internal/web"
 	"github.com/jalevin/gottl/internal/web/mid"
 )
@@ -45,8 +46,6 @@ func run() error {
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer cancel()
 
-	apisvr := web.New(cfg.Version.Build, cfg.Web, logger)
-
 	wg := sync.WaitGroup{}
 	wg.Add(1)
 
@@ -60,6 +59,9 @@ func run() error {
 			logger.Error().Err(err).Msg("closing queries")
 		}
 	}()
+
+	svc := services.NewService(logger, queries)
+	apisvr := web.New(cfg.Version.Build, cfg.Web, logger, svc)
 
 	go func() {
 		defer wg.Done()
