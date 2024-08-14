@@ -52,7 +52,7 @@ type UserAuthenticate struct {
 
 type UserUpdate struct {
 	Email    *string `json:"email"    validate:"omitempty,email"`
-	Usenrame *string `json:"username" validate:"omitempty,min=6,max=128"`
+	Username *string `json:"username" validate:"omitempty,min=6,max=128"`
 	Password *string `json:"password" validate:"omitempty,min=6,max=256"`
 }
 

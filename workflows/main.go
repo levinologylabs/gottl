@@ -78,6 +78,7 @@ func (g *Workflows) Test(
 	// get the build environment container
 	// by calling another Dagger Function
 	return g.TestEnv(source).
+		WithEnvVariable("UNSAFE_PASSWORD_PROTECTION", "yes_i_am_sure"). // disable password hashing
 		WithEnvVariable("TEST_INTEGRATION", strconv.FormatBool(integration)).
 		WithExec([]string{"go", "test", "./..."}).
 		Stdout(ctx)

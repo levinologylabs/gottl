@@ -47,3 +47,9 @@ func TestLogger(t *testing.T) zerolog.Logger {
 
 	return logger
 }
+
+// Ptr returns a point to the provided values. Useful for initializing strings
+// and other primtive types directly as pointers.
+func Ptr[T any](v T) *T {
+	return &v
+}

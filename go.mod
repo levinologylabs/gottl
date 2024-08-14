@@ -5,6 +5,7 @@ go 1.22
 require (
 	github.com/alexedwards/argon2id v1.0.0
 	github.com/ardanlabs/conf/v3 v3.1.7
+	github.com/brianvoe/gofakeit/v7 v7.0.4
 	github.com/go-chi/chi/v5 v5.1.0
 	github.com/go-chi/cors v1.2.1
 	github.com/google/uuid v1.6.0

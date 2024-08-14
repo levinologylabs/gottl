@@ -71,9 +71,19 @@ func (s *UserService) Authenticate(ctx context.Context, data dtos.UserAuthentica
 	return s.mapper.Map(dbsuer), nil
 }
 
-// Get returns a single user by id from the database.
-func (s *UserService) Get(ctx context.Context, id uuid.UUID) (dtos.User, error) {
+// GetByID returns a single user by id from the database.
+func (s *UserService) GetByID(ctx context.Context, id uuid.UUID) (dtos.User, error) {
 	v, err := s.db.UserByID(ctx, id)
+	if err != nil {
+		return dtos.User{}, err
+	}
+
+	return s.mapper.Map(v), nil
+}
+
+// GetByID returns a single user by id from the database.
+func (s *UserService) GetByEmail(ctx context.Context, email string) (dtos.User, error) {
+	v, err := s.db.UserByEmail(ctx, email)
 	if err != nil {
 		return dtos.User{}, err
 	}
@@ -95,7 +105,7 @@ func (s *UserService) Delete(ctx context.Context, id uuid.UUID) error {
 func (s *UserService) UpdateDetails(ctx context.Context, id uuid.UUID, data dtos.UserUpdate) (dtos.User, error) {
 	v, err := s.db.UserUpdate(ctx, db.UserUpdateParams{
 		ID:           id,
-		Username:     data.Usenrame,
+		Username:     data.Username,
 		Email:        data.Email,
 		PasswordHash: nil,
 	})
