@@ -81,7 +81,7 @@ func (s *UserService) GetByID(ctx context.Context, id uuid.UUID) (dtos.User, err
 	return s.mapper.Map(v), nil
 }
 
-// GetByID returns a single user by id from the database.
+// GetByEmail returns a single user by email from the database.
 func (s *UserService) GetByEmail(ctx context.Context, email string) (dtos.User, error) {
 	v, err := s.db.UserByEmail(ctx, email)
 	if err != nil {

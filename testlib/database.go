@@ -119,7 +119,7 @@ func NewDatabase(t *testing.T, tlog zerolog.Logger, fns ...OptionsFunc) *db.Quer
 
 	client := NewPersistent(t, tlog, fns...)
 	t.Cleanup(func() {
-		client.Close(context.Background())
+		_ = client.Close(context.Background())
 	})
 
 	return client

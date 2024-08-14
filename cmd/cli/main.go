@@ -47,6 +47,13 @@ func ConfigFromCLI() (*Config, error) {
 }
 
 func main() {
+	err := run()
+	if err != nil {
+		os.Exit(1)
+	}
+}
+
+func run() error {
 	cfg, err := ConfigFromCLI()
 	if err != nil {
 		panic(err)
@@ -74,12 +81,16 @@ func main() {
 		if err != nil {
 			log.Fatal().Err(err).Msg("failed to open database connection")
 		}
-		defer stdlibConn.Close()
+		defer func() {
+			conerr := stdlibConn.Close()
+			log.Err(conerr).Msg("failed to close database connection")
+		}()
 
 		obtainlock := func() {
 			_, err := stdlibConn.Exec("SELECT pg_advisory_lock($1)", migrations.AdvisoryLock)
 			if err != nil {
-				log.Fatal().Err(err).Msg("failed to obtain lock")
+				log.Error().Err(err).Msg("failed to obtain lock")
+				return
 			}
 
 			log.Info().Msg("obtained lock")
@@ -92,7 +103,7 @@ func main() {
 
 			err := migrations.Migrate(log.Logger, stdlibConn)
 			if err != nil {
-				log.Fatal().Err(err).Msg("failed to run migrations up")
+				log.Error().Err(err).Msg("failed to run migrations up")
 			}
 
 			log.Info().Msg("successfully ran migrations up")
@@ -102,12 +113,14 @@ func main() {
 			obtainlock()
 			err := migrations.Rollback(log.Logger, stdlibConn)
 			if err != nil {
-				log.Fatal().Err(err).Msg("failed to rollback migrations")
+				log.Error().Err(err).Msg("failed to rollback migrations")
+				return err
 			}
 
 			log.Info().Msg("successfully rolled back migrations")
 		default:
-			log.Fatal().Str("subcmd", subcmd).Msg("unknown subcommand")
+			log.Error().Str("subcmd", subcmd).Msg("unknown subcommand")
+			return errors.New("unknown subcommand")
 		}
 
 	case "seed":
@@ -115,7 +128,8 @@ func main() {
 
 		q, err := db.NewExt(context.Background(), log.Logger, cfg.Postgres, false)
 		if err != nil {
-			log.Fatal().Err(err).Msg("failed to create db connection")
+			log.Error().Err(err).Msg("failed to create db connection")
+			return err
 		}
 
 		service := services.NewUserService(log.Logger, q)
@@ -126,7 +140,8 @@ func main() {
 			Password: cfg.Seed.Password,
 		})
 		if err != nil {
-			log.Fatal().Err(err).Msg("failed to seed database")
+			log.Error().Err(err).Msg("failed to seed database")
+			return err
 		}
 
 		var (
@@ -143,7 +158,8 @@ func main() {
 			SubscriptionEndedDate: &subEndDate,
 		})
 		if err != nil {
-			log.Fatal().Err(err).Str("step", "subscription data").Msg("failed to seed database")
+			log.Error().Err(err).Str("step", "subscription data").Msg("failed to seed database")
+			return err
 		}
 
 		log.Info().
@@ -153,6 +169,9 @@ func main() {
 			Msg("successfully seeded database")
 
 	default:
-		log.Fatal().Str("cmd", cmd).Msg("unknown command")
+		log.Error().Str("cmd", cmd).Msg("unknown command")
+		return errors.New("unknown command")
 	}
+
+	return nil
 }

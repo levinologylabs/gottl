@@ -65,7 +65,7 @@ func (g *Workflows) TestEnv(source *dagger.Directory) *dagger.Container {
 	return golang
 }
 
-// Return the result of running unit tests
+// Test runs the integration tests for the project with the associated services.
 func (g *Workflows) Test(
 	ctx context.Context,
 	source *dagger.Directory,

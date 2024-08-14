@@ -77,7 +77,6 @@ func NewExt(ctx context.Context, logger zerolog.Logger, config Config, runMigrat
 		for {
 			_, err = conn.Exec(ctx, "SELECT pg_advisory_lock($1)", migrations.AdvisoryLock)
 			if err != nil {
-
 				if retries == 0 {
 					return nil, err
 				}
@@ -104,7 +103,11 @@ func NewExt(ctx context.Context, logger zerolog.Logger, config Config, runMigrat
 		if err != nil {
 			return nil, err
 		}
-		defer stdlibConn.Close()
+		defer func() {
+			if err := stdlibConn.Close(); err != nil {
+				logger.Error().Err(err).Msg("failed to close stdlib connection")
+			}
+		}()
 
 		err = migrations.Migrate(logger, stdlibConn)
 		if err != nil {

@@ -2,7 +2,7 @@ package dtos
 
 // MapFunc provides a generic function for mapping data types from one to another.
 // Utilizing this type allows the user to define a single mapping function and then
-// utilize reciever functions to easily map slices of the types, or simplify returns
+// utilize receiver functions to easily map slices of the types, or simplify returns
 // when an error is present.
 type MapFunc[T any, U any] func(T) U
 

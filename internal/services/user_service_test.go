@@ -124,7 +124,7 @@ func Test_UserService_UpdateUser(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	assert.Equal(t, updatedUser.Email, "new@example.com", "email should have changed")
+	assert.Equal(t, "new@example.com", updatedUser.Email, "email should have changed")
 	assert.Equal(t, user.Username, updatedUser.Username, "username should not have changed")
 
 	// Patch Subscription Details

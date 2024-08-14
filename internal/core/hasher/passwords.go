@@ -1,3 +1,5 @@
+// Package hasher wraps the argon2id hashing package to provide a simple interface for hashing
+// and verifying passwords.
 package hasher
 
 import (

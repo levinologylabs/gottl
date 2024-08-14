@@ -1,3 +1,4 @@
+// Package docs servces the swagger.json file.
 package docs
 
 import (
