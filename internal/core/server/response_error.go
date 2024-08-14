@@ -74,14 +74,6 @@ func (b *ErrorBuilder) Msgf(format string, args ...any) *ErrorBuilder {
 	return b
 }
 
-// Code sets the HTTP status code that will be used in the response. If no code is
-// provided, http.StatusInternalServerError will be used.
-//
-// Deprecated: Use Status instead.
-func (b *ErrorBuilder) Code(code int) *ErrorBuilder {
-	return b.Status(code)
-}
-
 // Status sets the HTTP status code that will be used in the response. If no code is
 // provided, http.StatusInternalServerError will be used.
 func (b *ErrorBuilder) Status(status int) *ErrorBuilder {

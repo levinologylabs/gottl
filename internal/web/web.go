@@ -9,6 +9,7 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
 	"github.com/jalevin/gottl/internal/data/dtos"
+	"github.com/jalevin/gottl/internal/services"
 	"github.com/jalevin/gottl/internal/web/docs"
 	"github.com/jalevin/gottl/internal/web/handlers"
 	"github.com/jalevin/gottl/internal/web/mid"
@@ -16,21 +17,24 @@ import (
 )
 
 type Web struct {
-	build  string
-	cfg    Config
-	server *http.Server
-	logger zerolog.Logger
+	build    string
+	cfg      Config
+	server   *http.Server
+	logger   zerolog.Logger
+	services *services.Service
 }
 
 func New(
 	build string,
 	conf Config,
 	logger zerolog.Logger,
+	services *services.Service,
 ) *Web {
 	w := &Web{
-		build:  build,
-		logger: logger,
-		cfg:    conf,
+		build:    build,
+		logger:   logger,
+		cfg:      conf,
+		services: services,
 	}
 
 	mux := w.routes(build)
@@ -90,6 +94,10 @@ func (web *Web) routes(build string) http.Handler {
 
 	mux.HandleFunc("GET /docs/swagger.json", adapter.Adapt(docs.SwaggerJSON))
 	mux.HandleFunc("GET /api/v1/info", adapter.Adapt(handlers.Info(dtos.StatusResponse{Build: build})))
+
+	mux.Group(func(r chi.Router) {
+		r.Use(mid.Authenticate(web.services.Users))
+	})
 
 	return mux
 }
