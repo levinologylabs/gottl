@@ -3,6 +3,11 @@ env:
   LOG_LEVEL: "debug"
 dotenv:
   - .env
+
+includes:
+  dag:
+    dir: ./.dagger/
+    taskfile: ./.dagger/Taskfile.yml
 tasks:
   install:
     desc: Installs required tools to run taskfile

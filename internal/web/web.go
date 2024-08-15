@@ -5,9 +5,13 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
+	"github.com/go-chi/cors"
 	"github.com/jalevin/gottl/internal/data/dtos"
 	"github.com/jalevin/gottl/internal/web/docs"
 	"github.com/jalevin/gottl/internal/web/handlers"
+	"github.com/jalevin/gottl/internal/web/mid"
 	"github.com/rs/zerolog"
 )
 
@@ -23,19 +27,20 @@ func New(
 	conf Config,
 	logger zerolog.Logger,
 ) *Web {
-	mux := routes(logger, build)
-
 	w := &Web{
 		build:  build,
 		logger: logger,
 		cfg:    conf,
-		server: &http.Server{
-			Handler:      mux,
-			Addr:         conf.Addr(),
-			IdleTimeout:  conf.IdleTimeout,
-			ReadTimeout:  conf.ReadTimeout,
-			WriteTimeout: conf.WriteTimeout,
-		},
+	}
+
+	mux := w.routes(build)
+
+	w.server = &http.Server{
+		Handler:      mux,
+		Addr:         conf.Addr(),
+		IdleTimeout:  conf.IdleTimeout,
+		ReadTimeout:  conf.ReadTimeout,
+		WriteTimeout: conf.WriteTimeout,
 	}
 
 	return w
@@ -54,14 +59,37 @@ func (web *Web) Start(ctx context.Context) error {
 	return web.server.ListenAndServe()
 }
 
-func routes(logger zerolog.Logger, build string) *http.ServeMux {
-	mux := http.NewServeMux()
+func (web *Web) routes(build string) http.Handler {
+	mux := chi.NewRouter()
+	mux.Use(
+		middleware.Recoverer,
+		middleware.RealIP,
+		middleware.CleanPath,
+		middleware.StripSlashes,
+		mid.RequestID(),
+		mid.Logger(web.logger),
+		middleware.AllowContentType("application/json", "text/plain", "text/html"),
+	)
 
-	mux.HandleFunc("/docs/swagger.json", docs.SwaggerJSON)
-
-	mux.HandleFunc("/api/v1/info", handlers.Info(logger, dtos.StatusResponse{
-		Build: build,
+	// Basic CORS
+	// for more ideas, see: https://developer.github.com/v3/#cross-origin-resource-sharing
+	mux.Use(cors.Handler(cors.Options{
+		AllowedOrigins:   web.cfg.Origins(),
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token", "X-Request-ID"},
+		ExposedHeaders:   []string{"Link"},
+		AllowCredentials: false,
+		MaxAge:           300, // Maximum value not ignored by any of major browsers
 	}))
+
+	adapter := mid.ErrorHandler(web.logger)
+
+	if web.cfg.EnableProfiler {
+		mux.Mount("/debug", middleware.Profiler())
+	}
+
+	mux.HandleFunc("GET /docs/swagger.json", adapter.Adapt(docs.SwaggerJSON))
+	mux.HandleFunc("GET /api/v1/info", adapter.Adapt(handlers.Info(dtos.StatusResponse{Build: build})))
 
 	return mux
 }

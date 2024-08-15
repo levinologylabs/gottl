@@ -7,23 +7,189 @@ package db
 
 import (
 	"context"
+
+	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
-const createUser = `-- name: CreateUser :one
+const userByEmail = `-- name: UserByEmail :one
+SELECT
+    id, created_at, updated_at, username, email, password_hash, stripe_customer_id, stripe_subscription_id, subscription_start_date, subscription_ended_date
+FROM
+    users
+WHERE
+    email = $1
+`
+
+func (q *Queries) UserByEmail(ctx context.Context, email string) (User, error) {
+	row := q.db.QueryRow(ctx, userByEmail, email)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Username,
+		&i.Email,
+		&i.PasswordHash,
+		&i.StripeCustomerID,
+		&i.StripeSubscriptionID,
+		&i.SubscriptionStartDate,
+		&i.SubscriptionEndedDate,
+	)
+	return i, err
+}
+
+const userByID = `-- name: UserByID :one
+SELECT
+    id, created_at, updated_at, username, email, password_hash, stripe_customer_id, stripe_subscription_id, subscription_start_date, subscription_ended_date
+FROM
+    users
+WHERE
+    id = $1
+`
+
+func (q *Queries) UserByID(ctx context.Context, id uuid.UUID) (User, error) {
+	row := q.db.QueryRow(ctx, userByID, id)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Username,
+		&i.Email,
+		&i.PasswordHash,
+		&i.StripeCustomerID,
+		&i.StripeSubscriptionID,
+		&i.SubscriptionStartDate,
+		&i.SubscriptionEndedDate,
+	)
+	return i, err
+}
+
+const userCreate = `-- name: UserCreate :one
 INSERT INTO
     users (username, email, password_hash)
 VALUES
     ($1, $2, $3) RETURNING id, created_at, updated_at, username, email, password_hash, stripe_customer_id, stripe_subscription_id, subscription_start_date, subscription_ended_date
 `
 
-type CreateUserParams struct {
+type UserCreateParams struct {
 	Username     string
 	Email        string
 	PasswordHash string
 }
 
-func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
-	row := q.db.QueryRow(ctx, createUser, arg.Username, arg.Email, arg.PasswordHash)
+func (q *Queries) UserCreate(ctx context.Context, arg UserCreateParams) (User, error) {
+	row := q.db.QueryRow(ctx, userCreate, arg.Username, arg.Email, arg.PasswordHash)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Username,
+		&i.Email,
+		&i.PasswordHash,
+		&i.StripeCustomerID,
+		&i.StripeSubscriptionID,
+		&i.SubscriptionStartDate,
+		&i.SubscriptionEndedDate,
+	)
+	return i, err
+}
+
+const userDeleteByID = `-- name: UserDeleteByID :exec
+DELETE FROM
+    users
+WHERE
+    id = $1
+`
+
+func (q *Queries) UserDeleteByID(ctx context.Context, id uuid.UUID) error {
+	_, err := q.db.Exec(ctx, userDeleteByID, id)
+	return err
+}
+
+const userUpdate = `-- name: UserUpdate :one
+UPDATE
+    users
+SET
+    username = COALESCE($2, username),
+    email = COALESCE($3, email),
+    password_hash = COALESCE($4, password_hash)
+WHERE
+    id = $1 RETURNING id, created_at, updated_at, username, email, password_hash, stripe_customer_id, stripe_subscription_id, subscription_start_date, subscription_ended_date
+`
+
+type UserUpdateParams struct {
+	ID           uuid.UUID
+	Username     *string
+	Email        *string
+	PasswordHash *string
+}
+
+func (q *Queries) UserUpdate(ctx context.Context, arg UserUpdateParams) (User, error) {
+	row := q.db.QueryRow(ctx, userUpdate,
+		arg.ID,
+		arg.Username,
+		arg.Email,
+		arg.PasswordHash,
+	)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Username,
+		&i.Email,
+		&i.PasswordHash,
+		&i.StripeCustomerID,
+		&i.StripeSubscriptionID,
+		&i.SubscriptionStartDate,
+		&i.SubscriptionEndedDate,
+	)
+	return i, err
+}
+
+const userUpdateBilling = `-- name: UserUpdateBilling :one
+UPDATE
+    users
+SET
+    stripe_customer_id = COALESCE(
+        $2,
+        stripe_customer_id
+    ),
+    stripe_subscription_id = COALESCE(
+        $3,
+        stripe_subscription_id
+    ),
+    subscription_start_date = COALESCE(
+        $4,
+        subscription_start_date
+    ),
+    subscription_ended_date = COALESCE(
+        $5,
+        subscription_ended_date
+    )
+WHERE
+    id = $1 RETURNING id, created_at, updated_at, username, email, password_hash, stripe_customer_id, stripe_subscription_id, subscription_start_date, subscription_ended_date
+`
+
+type UserUpdateBillingParams struct {
+	ID                    uuid.UUID
+	StripeCustomerID      *string
+	StripeSubscriptionID  *string
+	SubscriptionStartDate pgtype.Timestamp
+	SubscriptionEndedDate pgtype.Timestamp
+}
+
+func (q *Queries) UserUpdateBilling(ctx context.Context, arg UserUpdateBillingParams) (User, error) {
+	row := q.db.QueryRow(ctx, userUpdateBilling,
+		arg.ID,
+		arg.StripeCustomerID,
+		arg.StripeSubscriptionID,
+		arg.SubscriptionStartDate,
+		arg.SubscriptionEndedDate,
+	)
 	var i User
 	err := row.Scan(
 		&i.ID,
