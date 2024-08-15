@@ -28,6 +28,7 @@ func Authenticate(userservice *services.UserService) func(http.Handler) http.Han
 					Status(http.StatusUnauthorized).
 					Msg("unauthorized").
 					Write(r.Context(), w)
+				return
 			}
 
 			r = r.WithContext(services.WithUser(r.Context(), user))
@@ -49,8 +50,10 @@ func AuthorizeAdmin() func(http.Handler) http.Handler {
 					Status(http.StatusForbidden).
 					Msg("forbidden").
 					Write(r.Context(), w)
+				return
 			}
 
+			r = r.WithContext(services.WithVerifiedAdmin(r.Context()))
 			h.ServeHTTP(w, r)
 		})
 	}

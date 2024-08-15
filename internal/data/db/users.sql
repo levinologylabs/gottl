@@ -64,3 +64,19 @@ DELETE FROM
     users
 WHERE
     id = $1;
+
+-- name: UserGetAllCount :one
+SELECT
+    COUNT(*)
+FROM
+    users;
+
+-- name: UserGetAll :many
+SELECT
+    *
+FROM
+    users
+ORDER BY
+    id
+LIMIT
+    $1 OFFSET $2;

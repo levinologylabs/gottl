@@ -107,5 +107,16 @@ func (web *Web) routes(build string) http.Handler {
 		r.HandleFunc("PATCH /api/v1/users/self", adapter.Adapt(userctrl.Update))
 	})
 
+	mux.Group(func(r chi.Router) {
+		r.Use(
+			mid.Authenticate(web.services.Users),
+			mid.AuthorizeAdmin(),
+		)
+
+		admin := handlers.NewAdminController(web.services.Admin)
+
+		r.HandleFunc("GET /api/v1/admin/users", adapter.Adapt(admin.GetAllUsers))
+	})
+
 	return mux
 }

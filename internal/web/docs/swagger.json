@@ -8,7 +8,50 @@
     },
     "basePath": "/api",
     "paths": {
-        "/api/v1/status": {
+        "/api/v1/admin/users": {
+            "get": {
+                "description": "Get all users",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Get all users",
+                "parameters": [
+                    {
+                        "maximum": 100,
+                        "minimum": 1,
+                        "type": "integer",
+                        "name": "limit",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "minimum": 0,
+                        "type": "integer",
+                        "name": "skip",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/dtos.User"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/info": {
             "get": {
                 "description": "Get the status of the service",
                 "consumes": [
