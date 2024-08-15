@@ -23,7 +23,9 @@ func (h RequestIDTraceHook) Run(e *zerolog.Event, level zerolog.Level, msg strin
 	e.Str("rid", requestID)
 }
 
-var reqCtxKeyType = struct{}{}
+type reqCtxKey string
+
+const reqCtxKeyType reqCtxKey = "request_id"
 
 func getRequestIDFromContext(ctx context.Context) string {
 	if ctx == nil {

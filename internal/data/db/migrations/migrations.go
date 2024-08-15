@@ -1,3 +1,4 @@
+// Package migrations handles the database migrations using goose and embedded sql files.
 package migrations
 
 import (

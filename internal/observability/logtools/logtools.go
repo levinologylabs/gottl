@@ -1,3 +1,4 @@
+// Package logtools provides a common construction for loggers.
 package logtools
 
 import (
