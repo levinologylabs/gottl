@@ -144,6 +144,68 @@ func (q *Queries) UserDeleteByID(ctx context.Context, id uuid.UUID) error {
 	return err
 }
 
+const userGetAll = `-- name: UserGetAll :many
+SELECT
+    id, created_at, updated_at, username, email, password_hash, is_admin, stripe_customer_id, stripe_subscription_id, subscription_start_date, subscription_ended_date
+FROM
+    users
+ORDER BY
+    id
+LIMIT
+    $1 OFFSET $2
+`
+
+type UserGetAllParams struct {
+	Limit  int32
+	Offset int32
+}
+
+func (q *Queries) UserGetAll(ctx context.Context, arg UserGetAllParams) ([]User, error) {
+	rows, err := q.db.Query(ctx, userGetAll, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []User
+	for rows.Next() {
+		var i User
+		if err := rows.Scan(
+			&i.ID,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.Username,
+			&i.Email,
+			&i.PasswordHash,
+			&i.IsAdmin,
+			&i.StripeCustomerID,
+			&i.StripeSubscriptionID,
+			&i.SubscriptionStartDate,
+			&i.SubscriptionEndedDate,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const userGetAllCount = `-- name: UserGetAllCount :one
+SELECT
+    COUNT(*)
+FROM
+    users
+`
+
+func (q *Queries) UserGetAllCount(ctx context.Context) (int64, error) {
+	row := q.db.QueryRow(ctx, userGetAllCount)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const userUpdate = `-- name: UserUpdate :one
 UPDATE
     users
