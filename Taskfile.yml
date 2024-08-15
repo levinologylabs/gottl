@@ -90,4 +90,4 @@ tasks:
       - ./internal/web/docs/swagger.json
     cmds:
       - swag fmt --dir=./internal
-      - swag init --outputTypes=json -g ./cmd/api/main.go --output=./internal/web/docs/
+      - swag init --outputTypes=json -g ./cmd/api/main.go --output=./internal/web/docs/ -dir=./,./internal/data/dtos

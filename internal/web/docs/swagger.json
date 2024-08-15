@@ -40,12 +40,9 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "A list of users",
                         "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/dtos.User"
-                            }
+                            "$ref": "#/definitions/github_com_jalevin_gottl_internal_data_dtos.PaginationResponse-github_com_jalevin_gottl_internal_data_dtos_User"
                         }
                     }
                 }
@@ -68,7 +65,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/dtos.StatusResponse"
+                            "$ref": "#/definitions/github_com_jalevin_gottl_internal_data_dtos.StatusResponse"
                         }
                     }
                 }
@@ -94,7 +91,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/dtos.UserRegister"
+                            "$ref": "#/definitions/github_com_jalevin_gottl_internal_data_dtos.UserRegister"
                         }
                     }
                 ],
@@ -102,7 +99,7 @@
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/dtos.User"
+                            "$ref": "#/definitions/github_com_jalevin_gottl_internal_data_dtos.User"
                         }
                     }
                 }
@@ -128,7 +125,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/dtos.UserAuthenticate"
+                            "$ref": "#/definitions/github_com_jalevin_gottl_internal_data_dtos.UserAuthenticate"
                         }
                     }
                 ],
@@ -136,7 +133,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/dtos.UserSession"
+                            "$ref": "#/definitions/github_com_jalevin_gottl_internal_data_dtos.UserSession"
                         }
                     }
                 }
@@ -164,7 +161,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/dtos.User"
+                            "$ref": "#/definitions/github_com_jalevin_gottl_internal_data_dtos.User"
                         }
                     }
                 }
@@ -193,7 +190,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/dtos.UserUpdate"
+                            "$ref": "#/definitions/github_com_jalevin_gottl_internal_data_dtos.UserUpdate"
                         }
                     }
                 ],
@@ -201,7 +198,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/dtos.User"
+                            "$ref": "#/definitions/github_com_jalevin_gottl_internal_data_dtos.User"
                         }
                     }
                 }
@@ -209,7 +206,21 @@
         }
     },
     "definitions": {
-        "dtos.StatusResponse": {
+        "github_com_jalevin_gottl_internal_data_dtos.PaginationResponse-github_com_jalevin_gottl_internal_data_dtos_User": {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_jalevin_gottl_internal_data_dtos.User"
+                    }
+                },
+                "total": {
+                    "type": "integer"
+                }
+            }
+        },
+        "github_com_jalevin_gottl_internal_data_dtos.StatusResponse": {
             "type": "object",
             "properties": {
                 "build": {
@@ -217,7 +228,7 @@
                 }
             }
         },
-        "dtos.User": {
+        "github_com_jalevin_gottl_internal_data_dtos.User": {
             "type": "object",
             "properties": {
                 "createdAt": {
@@ -243,7 +254,7 @@
                 }
             }
         },
-        "dtos.UserAuthenticate": {
+        "github_com_jalevin_gottl_internal_data_dtos.UserAuthenticate": {
             "type": "object",
             "required": [
                 "email",
@@ -258,7 +269,7 @@
                 }
             }
         },
-        "dtos.UserRegister": {
+        "github_com_jalevin_gottl_internal_data_dtos.UserRegister": {
             "type": "object",
             "required": [
                 "email",
@@ -281,7 +292,7 @@
                 }
             }
         },
-        "dtos.UserSession": {
+        "github_com_jalevin_gottl_internal_data_dtos.UserSession": {
             "type": "object",
             "properties": {
                 "expiresAt": {
@@ -292,7 +303,7 @@
                 }
             }
         },
-        "dtos.UserUpdate": {
+        "github_com_jalevin_gottl_internal_data_dtos.UserUpdate": {
             "type": "object",
             "properties": {
                 "email": {
