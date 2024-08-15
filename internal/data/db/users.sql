@@ -14,6 +14,12 @@ FROM
 WHERE
     email = $1;
 
+-- name: UserCreateAdmin :one
+INSERT INTO
+    users (username, email, password_hash, is_admin)
+VALUES
+    ($1, $2, $3, TRUE) RETURNING *;
+
 -- name: UserCreate :one
 INSERT INTO
     users (username, email, password_hash)
