@@ -28,24 +28,6 @@ func NewUserService(l zerolog.Logger, db *db.QueriesExt) *UserService {
 	}
 }
 
-func (s *UserService) RegisterAdmin(ctx context.Context, date dtos.UserRegister) (dtos.User, error) {
-	pwHash, err := hasher.HashPassword(date.Password)
-	if err != nil {
-		return dtos.User{}, err
-	}
-
-	v, err := s.db.UserCreateAdmin(ctx, db.UserCreateAdminParams{
-		Username:     date.Username,
-		Email:        date.Email,
-		PasswordHash: pwHash,
-	})
-	if err != nil {
-		return dtos.User{}, err
-	}
-
-	return s.mapper.Map(v), nil
-}
-
 func (s *UserService) Register(ctx context.Context, data dtos.UserRegister) (dtos.User, error) {
 	pwHash, err := hasher.HashPassword(data.Password)
 	if err != nil {
