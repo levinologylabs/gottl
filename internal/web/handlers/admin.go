@@ -24,8 +24,8 @@ func NewAdminController(adminservice *services.AdminService) *AdminController {
 //	@Description	Get all users
 //	@Accept			json
 //	@Produce		json
-//	@Param			page	query		dtos.Pagination	true	"Pagination details"
-//	@Success		200		{object}	dtos.PaginationResponse[dtos.User]
+//	@Param			page	query		dtos.Pagination						true	"Pagination details"
+//	@Success		200		{object}	dtos.PaginationResponse[dtos.User]	"A list of users"
 //	@Router			/api/v1/admin/users [GET]
 func (ac *AdminController) GetAllUsers(w http.ResponseWriter, r *http.Request) error {
 	page, err := extractors.Query[dtos.Pagination](r)
