@@ -6,25 +6,18 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"time"
 
 	"github.com/ardanlabs/conf/v3"
 	"github.com/jalevin/gottl/internal/data/db"
 	"github.com/jalevin/gottl/internal/data/db/migrations"
-	"github.com/jalevin/gottl/internal/data/dtos"
 	"github.com/jalevin/gottl/internal/observability/logtools"
-	"github.com/jalevin/gottl/internal/services"
 	"github.com/rs/zerolog/log"
 )
 
 type Config struct {
 	Postgres db.Config
 	Logs     logtools.Config
-	Seed     struct {
-		Email    string `conf:"default:admin@example.com"`
-		Username string `conf:"default:admin"`
-		Password string `conf:"default:admin1"`
-	}
+	Seed     Seed
 }
 
 // ConfigFromCLI parses the CLI/Config file and returns a Config struct. If the file argument is an empty string, the
@@ -132,42 +125,7 @@ func run() error {
 			return err
 		}
 
-		service := services.NewUserService(log.Logger, q)
-
-		user, err := service.Register(context.Background(), dtos.UserRegister{
-			Email:    cfg.Seed.Email,
-			Username: cfg.Seed.Username,
-			Password: cfg.Seed.Password,
-		})
-		if err != nil {
-			log.Error().Err(err).Msg("failed to seed database")
-			return err
-		}
-
-		var (
-			subCustID    = "cus_ADMIN_OVERRIDE"
-			subID        = "sub_ADMIN_OVERRIDE"
-			subStartDate = time.Now()
-			subEndDate   = time.Now().AddDate(20, 0, 0)
-		)
-
-		_, err = service.UpdateSubscription(context.Background(), user.ID, dtos.UserUpdateSubscription{
-			StripeCustomerID:      &subCustID,
-			StripeSubscriptionID:  &subID,
-			SubscriptionStartDate: &subStartDate,
-			SubscriptionEndedDate: &subEndDate,
-		})
-		if err != nil {
-			log.Error().Err(err).Str("step", "subscription data").Msg("failed to seed database")
-			return err
-		}
-
-		log.Info().
-			Str("id", user.ID.String()).
-			Str("email", user.Email).
-			Str("username", user.Username).
-			Msg("successfully seeded database")
-
+		return seed(q, cfg.Seed)
 	default:
 		log.Error().Str("cmd", cmd).Msg("unknown command")
 		return errors.New("unknown command")
