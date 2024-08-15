@@ -17,9 +17,9 @@ type Seed struct {
 }
 
 func seed(q *db.QueriesExt, cfg Seed) error {
-	service := services.NewUserService(log.Logger, q)
+	svcs := services.NewService(log.Logger, q)
 
-	user, err := service.RegisterAdmin(context.Background(), dtos.UserRegister{
+	user, err := svcs.Admin.Register(context.Background(), dtos.UserRegister{
 		Email:    cfg.Email,
 		Username: cfg.Username,
 		Password: cfg.Password,
@@ -36,7 +36,7 @@ func seed(q *db.QueriesExt, cfg Seed) error {
 		subEndDate   = time.Now().AddDate(20, 0, 0)
 	)
 
-	_, err = service.UpdateSubscription(context.Background(), user.ID, dtos.UserUpdateSubscription{
+	_, err = svcs.Users.UpdateSubscription(context.Background(), user.ID, dtos.UserUpdateSubscription{
 		StripeCustomerID:      &subCustID,
 		StripeSubscriptionID:  &subID,
 		SubscriptionStartDate: &subStartDate,

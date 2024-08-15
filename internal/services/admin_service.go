@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 
+	"github.com/jalevin/gottl/internal/core/hasher"
 	"github.com/jalevin/gottl/internal/data/db"
 	"github.com/jalevin/gottl/internal/data/dtos"
 	"github.com/rs/zerolog"
@@ -20,6 +21,24 @@ func NewAdminService(l zerolog.Logger, db *db.QueriesExt) *AdminService {
 		db:     db,
 		mapper: dtos.MapUser,
 	}
+}
+
+func (s *AdminService) Register(ctx context.Context, date dtos.UserRegister) (dtos.User, error) {
+	pwHash, err := hasher.HashPassword(date.Password)
+	if err != nil {
+		return dtos.User{}, err
+	}
+
+	v, err := s.db.UserCreateAdmin(ctx, db.UserCreateAdminParams{
+		Username:     date.Username,
+		Email:        date.Email,
+		PasswordHash: pwHash,
+	})
+	if err != nil {
+		return dtos.User{}, err
+	}
+
+	return s.mapper.Map(v), nil
 }
 
 func (s *AdminService) GetAllUsers(ctx context.Context, page dtos.Pagination) (dtos.PaginationResponse[dtos.User], error) {
