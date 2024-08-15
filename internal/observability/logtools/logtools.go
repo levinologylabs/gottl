@@ -9,9 +9,9 @@ import (
 )
 
 type Config struct {
-	Level   string `json:"level" conf:"default:debug"`
-	Style   string `json:"style" conf:"default:console"`
-	Color   bool   `json:"color" conf:"default:true"`
+	Level   string `json:"level"   conf:"default:debug"`
+	Style   string `json:"style"   conf:"default:console"`
+	Color   bool   `json:"color"   conf:"default:true"`
 	LogFile string `json:"logFile"`
 }
 
