@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS users (
     username VARCHAR(100) NOT NULL DEFAULT '',
     email VARCHAR(254) NOT NULL UNIQUE,
     password_hash VARCHAR(500) NOT NULL,
+    is_admin BOOLEAN NOT NULL DEFAULT FALSE,
     -- billing information
     stripe_customer_id VARCHAR(50),
     stripe_subscription_id VARCHAR(50),

@@ -61,7 +61,7 @@ func (q *Queries) SessionDeleteExpiredBefore(ctx context.Context, expiresAt time
 
 const userBySession = `-- name: UserBySession :one
 SELECT
-    users.id, users.created_at, users.updated_at, users.username, users.email, users.password_hash, users.stripe_customer_id, users.stripe_subscription_id, users.subscription_start_date, users.subscription_ended_date
+    users.id, users.created_at, users.updated_at, users.username, users.email, users.password_hash, users.is_admin, users.stripe_customer_id, users.stripe_subscription_id, users.subscription_start_date, users.subscription_ended_date
 FROM
     user_sessions
     JOIN users ON user_sessions.user_id = users.id
@@ -80,6 +80,7 @@ func (q *Queries) UserBySession(ctx context.Context, token []byte) (User, error)
 		&i.Username,
 		&i.Email,
 		&i.PasswordHash,
+		&i.IsAdmin,
 		&i.StripeCustomerID,
 		&i.StripeSubscriptionID,
 		&i.SubscriptionStartDate,

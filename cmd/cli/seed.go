@@ -19,7 +19,7 @@ type Seed struct {
 func seed(q *db.QueriesExt, cfg Seed) error {
 	service := services.NewUserService(log.Logger, q)
 
-	user, err := service.Register(context.Background(), dtos.UserRegister{
+	user, err := service.RegisterAdmin(context.Background(), dtos.UserRegister{
 		Email:    cfg.Email,
 		Username: cfg.Username,
 		Password: cfg.Password,
