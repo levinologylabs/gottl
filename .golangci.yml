@@ -4,7 +4,7 @@ issues:
   exclude-use-default: false
   fix: false
   exclude-dirs:
-    - workflows/
+    - .dagger/
   exclude-files:
     - ".*gen.go"
 linters-settings:

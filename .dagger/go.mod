@@ -1,4 +1,4 @@
-module github.com/jalevin/gottl/workflows
+module github.com/jalevin/gottl/dagger
 
 go 1.22
 
