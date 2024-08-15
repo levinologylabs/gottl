@@ -77,8 +77,11 @@ func NewPersistent(t *testing.T, tlog zerolog.Logger, fns ...OptionsFunc) *db.Qu
 	}
 
 	var exists bool
-	var err error
-	_ = conn.QueryRow(ctx, "SELECT 1 FROM pg_database WHERE datname = $1", options.database).Scan(&exists)
+	err := conn.QueryRow(ctx, "SELECT 1 FROM pg_database WHERE datname = $1", options.database).Scan(&exists)
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	if !exists {
 		_, err = conn.Exec(ctx, "CREATE DATABASE "+options.database)
 		if err != nil {
