@@ -4,7 +4,7 @@ import (
 	"context"
 	"strconv"
 
-	"github.com/jalevin/gottl/workflows/internal/dagger"
+	"github.com/jalevin/gottl/dagger/internal/dagger"
 )
 
 var (
@@ -30,14 +30,6 @@ func (g *Workflows) TestEnv(source *dagger.Directory) *dagger.Container {
 		WithEnvVariable("POSTGRES_PASSWORD", "postgres").
 		WithEnvVariable("POSTGRES_USER", "postgres").
 		AsService()
-
-	/* goMod := ci.dag.Host().File(projectPath("backend", "go.mod")) */
-	/* goSum := ci.dag.Host().File(projectPath("backend", "go.sum")) */
-	/* return c.WithFile("src/go.mod", goMod). */
-	/* 	WithFile("src/go.sum", goSum). */
-	/* 	WithMountedCache("/go/pkg/mod", ci.dag.CacheVolume("go-mod-121")). */
-	/* 	WithEnvVariable("GOMODCACHE", "/go/pkg/mod"). */
-	/* 	WithExec([]string{"go", "mod", "download"}) */
 
 	golang := g.dag.Container().
 		From(imageGolang).
@@ -80,6 +72,6 @@ func (g *Workflows) Test(
 	return g.TestEnv(source).
 		WithEnvVariable("UNSAFE_PASSWORD_PROTECTION", "yes_i_am_sure"). // disable password hashing
 		WithEnvVariable("TEST_INTEGRATION", strconv.FormatBool(integration)).
-		WithExec([]string{"go", "test", "./..."}).
+		WithExec([]string{"go", "test", "-v", "./..."}).
 		Stdout(ctx)
 }
