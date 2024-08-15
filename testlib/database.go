@@ -42,7 +42,7 @@ func NewPersistent(t *testing.T, tlog zerolog.Logger, fns ...OptionsFunc) *db.Qu
 	IntegrationGuard(t)
 
 	options := &options{
-		database: EnvOrDefault("GOTTL_POSTGRES_DATABASE", randomDBName()),
+		database: randomDBName(),
 	}
 	for _, fn := range fns {
 		fn(options)
