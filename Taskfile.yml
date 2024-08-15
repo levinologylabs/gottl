@@ -9,6 +9,12 @@ includes:
     dir: ./.dagger/
     taskfile: ./.dagger/Taskfile.yml
 tasks:
+  install:
+    desc: Installs required tools to run taskfile
+    cmds:
+      - go install github.com/swaggo/swag/cmd/swag@latest
+      - go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
+    silent: false
   run:
     desc: Runs the main application and supports passing CLI args
     deps:
@@ -18,6 +24,10 @@ tasks:
       - docker compose -f ./conf/docker-compose.yml up --detach
       - go run ./cmd/api/*.go {{ .CLI_ARGS }}
     silent: false
+  docker:
+    desc: Runs docker compose with config. `task docker -- down` you must use the --
+    cmds:
+      - docker compose -f ./conf/docker-compose.yml {{ .CLI_ARGS }}
   build:
     desc: Builds the backend binary
     cmds:
@@ -46,28 +56,23 @@ tasks:
       - task: tidy
       - task: lint
       - task: test
-
   db:migration:
     desc: "Creates a new up/down migration ex: `task db:migration -- create_user_table`"
     dir: ./internal/data/db/migrations/sql
     cmds:
       - goose create {{ .CLI_ARGS }} sql
-
   db:up:
     desc: "Runs the migration cli to apply all migrations"
     cmds:
       - go run ./cmd/cli/*.go migrate up
-
   db:down:
     desc: "Runs the migration cli to rollback the last migration"
     cmds:
       - go run ./cmd/cli/*.go migrate down
-
   db:seed:
     desc: "Runs the migration cli to seed the database"
     cmds:
       - go run ./cmd/cli/*.go seed
-
   db:sqlc:
     aliases: ["sqlc"]
     desc: "Generate the sqlc code"
@@ -79,7 +84,6 @@ tasks:
       - ./internal/data/db/*.go
     cmds:
       - sqlc generate
-
   swag:
     desc: Generate swagger docs
     sources:
