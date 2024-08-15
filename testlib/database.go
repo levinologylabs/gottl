@@ -5,7 +5,6 @@ import (
 	"context"
 	"crypto/rand"
 	"fmt"
-	"strings"
 	"testing"
 	"time"
 
@@ -78,17 +77,8 @@ func NewPersistent(t *testing.T, tlog zerolog.Logger, fns ...OptionsFunc) *db.Qu
 	}
 
 	var exists bool
-	err := conn.QueryRow(ctx, "SELECT EXISTS (SELECT 1 FROM pg_database WHERE datname = $1)", options.database).Scan(&exists)
-	if err != nil {
-		// No Database error is not a checkable error :(
-		errStr := err.Error()
-		if strings.Contains(errStr, "does not exist") && strings.Contains(errStr, "database") {
-			exists = false
-		} else {
-			t.Fatal(err)
-		}
-	}
-
+	var err error
+	_ = conn.QueryRow(ctx, "SELECT 1 FROM pg_database WHERE datname = $1", options.database).Scan(&exists)
 	if !exists {
 		_, err = conn.Exec(ctx, "CREATE DATABASE "+options.database)
 		if err != nil {
