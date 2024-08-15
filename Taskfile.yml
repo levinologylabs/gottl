@@ -6,8 +6,8 @@ dotenv:
 
 includes:
   dag:
-    dir: ./workflows/
-    taskfile: ./workflows/Taskfile.yml
+    dir: ./.dagger/
+    taskfile: ./.dagger/Taskfile.yml
 tasks:
   run:
     desc: Runs the main application and supports passing CLI args
