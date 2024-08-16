@@ -23,7 +23,7 @@ type UserServiceTestCtx struct {
 
 func SetupUserServiceTest(t *testing.T) UserServiceTestCtx {
 	var (
-		logger  = testlib.TestLogger(t)
+		logger  = testlib.Logger(t)
 		queries = testlib.NewDatabase(t, logger)
 		s       = services.NewUserService(logger, queries)
 	)
@@ -55,13 +55,19 @@ func Test_UserService_RegisterAndLogin(t *testing.T) {
 
 	// Login With Correct Password
 
-	loginUser, err := st.s.Authenticate(context.Background(), dtos.UserAuthenticate{
+	session, err := st.s.Authenticate(context.Background(), dtos.UserAuthenticate{
 		Email:    st.user.Email,
 		Password: st.user.Password,
 	})
 
 	require.NoError(t, err)
-	require.NotNil(t, loginUser)
+	require.NotNil(t, session)
+
+	assert.NotEmpty(t, session.Token)
+	assert.True(t, session.ExpiresAt.After(time.Now()))
+
+	loginUser, err := st.s.SessionVerify(st.ctx, session.Token)
+	require.NoError(t, err)
 
 	assert.Equal(t, registerUser, loginUser)
 

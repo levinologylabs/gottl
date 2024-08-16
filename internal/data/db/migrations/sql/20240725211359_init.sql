@@ -11,12 +11,15 @@ CREATE TABLE IF NOT EXISTS users (
     username VARCHAR(100) NOT NULL DEFAULT '',
     email VARCHAR(254) NOT NULL UNIQUE,
     password_hash VARCHAR(500) NOT NULL,
+    is_admin BOOLEAN NOT NULL DEFAULT FALSE,
     -- billing information
     stripe_customer_id VARCHAR(50),
     stripe_subscription_id VARCHAR(50),
     subscription_start_date TIMESTAMP,
     subscription_ended_date TIMESTAMP
 );
+
+CREATE UNIQUE INDEX IF NOT EXISTS users_email_idx ON users (email);
 
 -- +goose StatementEnd
 -- +goose Down

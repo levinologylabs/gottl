@@ -8,6 +8,46 @@
     },
     "basePath": "/api",
     "paths": {
+        "/api/v1/admin/users": {
+            "get": {
+                "description": "Get all users",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Get all users",
+                "parameters": [
+                    {
+                        "maximum": 100,
+                        "minimum": 1,
+                        "type": "integer",
+                        "name": "limit",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "minimum": 0,
+                        "type": "integer",
+                        "name": "skip",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "A list of users",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_jalevin_gottl_internal_data_dtos.PaginationResponse-github_com_jalevin_gottl_internal_data_dtos_User"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/info": {
             "get": {
                 "description": "Get the status of the service",
@@ -25,7 +65,140 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/dtos.StatusResponse"
+                            "$ref": "#/definitions/github_com_jalevin_gottl_internal_data_dtos.StatusResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/users": {
+            "post": {
+                "description": "Register a new user",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User"
+                ],
+                "summary": "Register a new user",
+                "parameters": [
+                    {
+                        "description": "User details",
+                        "name": "user",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_jalevin_gottl_internal_data_dtos.UserRegister"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_jalevin_gottl_internal_data_dtos.User"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/users/authenticate": {
+            "post": {
+                "description": "Authenticate a user",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Authenticate a user",
+                "parameters": [
+                    {
+                        "description": "User credentials",
+                        "name": "user",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_jalevin_gottl_internal_data_dtos.UserAuthenticate"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_jalevin_gottl_internal_data_dtos.UserSession"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/users/self": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Get the current user",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User"
+                ],
+                "summary": "Get the current user",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_jalevin_gottl_internal_data_dtos.User"
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Update the current user's details",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User"
+                ],
+                "summary": "Update the current user's details",
+                "parameters": [
+                    {
+                        "description": "User details",
+                        "name": "user",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_jalevin_gottl_internal_data_dtos.UserUpdate"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_jalevin_gottl_internal_data_dtos.User"
                         }
                     }
                 }
@@ -33,11 +206,118 @@
         }
     },
     "definitions": {
-        "dtos.StatusResponse": {
+        "github_com_jalevin_gottl_internal_data_dtos.PaginationResponse-github_com_jalevin_gottl_internal_data_dtos_User": {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_jalevin_gottl_internal_data_dtos.User"
+                    }
+                },
+                "total": {
+                    "type": "integer"
+                }
+            }
+        },
+        "github_com_jalevin_gottl_internal_data_dtos.StatusResponse": {
             "type": "object",
             "properties": {
                 "build": {
                     "type": "string"
+                }
+            }
+        },
+        "github_com_jalevin_gottl_internal_data_dtos.User": {
+            "type": "object",
+            "properties": {
+                "createdAt": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "subscriptionEndedDate": {
+                    "type": "string"
+                },
+                "subscriptionStartDate": {
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "type": "string"
+                },
+                "username": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_jalevin_gottl_internal_data_dtos.UserAuthenticate": {
+            "type": "object",
+            "required": [
+                "email",
+                "password"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_jalevin_gottl_internal_data_dtos.UserRegister": {
+            "type": "object",
+            "required": [
+                "email",
+                "password",
+                "username"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string",
+                    "maxLength": 256,
+                    "minLength": 6
+                },
+                "username": {
+                    "type": "string",
+                    "maxLength": 128,
+                    "minLength": 6
+                }
+            }
+        },
+        "github_com_jalevin_gottl_internal_data_dtos.UserSession": {
+            "type": "object",
+            "properties": {
+                "expiresAt": {
+                    "type": "string"
+                },
+                "token": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_jalevin_gottl_internal_data_dtos.UserUpdate": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string",
+                    "maxLength": 256,
+                    "minLength": 6
+                },
+                "username": {
+                    "type": "string",
+                    "maxLength": 128,
+                    "minLength": 6
                 }
             }
         }

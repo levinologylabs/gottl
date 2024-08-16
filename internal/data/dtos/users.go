@@ -13,6 +13,7 @@ type User struct {
 	UpdatedAt time.Time `json:"updatedAt"`
 	Username  string    `json:"username"`
 	Email     string    `json:"email"`
+	IsAdmin   bool      `json:"-"`
 
 	StripeCustomerID      *string   `json:"-"`
 	StripeSubscriptionID  *string   `json:"-"`
@@ -71,6 +72,7 @@ func MapUser(dbu db.User) User {
 		UpdatedAt:             dbu.UpdatedAt,
 		Username:              dbu.Username,
 		Email:                 dbu.Email,
+		IsAdmin:               dbu.IsAdmin,
 		StripeCustomerID:      dbu.StripeCustomerID,
 		StripeSubscriptionID:  dbu.StripeSubscriptionID,
 		SubscriptionStartDate: dbu.SubscriptionStartDate.Time,

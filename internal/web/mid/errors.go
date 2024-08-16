@@ -6,6 +6,7 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jalevin/gottl/internal/core/server"
+	"github.com/jalevin/gottl/internal/services"
 	"github.com/rs/zerolog"
 )
 
@@ -54,6 +55,9 @@ func ErrorHandler(log zerolog.Logger) ErrorAdapter {
 			case errors.Is(err, pgx.ErrNoRows):
 				bldr.Status(http.StatusNotFound).
 					Msg("resource not found")
+			case errors.Is(err, services.ErrNotAdmin):
+				bldr.Status(http.StatusForbidden).
+					Msg("forbidden")
 			default:
 				bldr.Status(http.StatusInternalServerError).
 					Msg("internal server error")

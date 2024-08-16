@@ -4,6 +4,7 @@ package testlib
 import (
 	"context"
 	"crypto/rand"
+	"errors"
 	"fmt"
 	"testing"
 	"time"
@@ -79,7 +80,11 @@ func NewPersistent(t *testing.T, tlog zerolog.Logger, fns ...OptionsFunc) *db.Qu
 	var exists bool
 	err := conn.QueryRow(ctx, "SELECT 1 FROM pg_database WHERE datname = $1", options.database).Scan(&exists)
 	if err != nil {
-		t.Fatal(err)
+		if !errors.Is(err, pgx.ErrNoRows) {
+			t.Fatalf("failed to check if database exists: %v", err)
+		}
+
+		exists = false
 	}
 
 	if !exists {
