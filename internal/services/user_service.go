@@ -51,7 +51,7 @@ func (s *UserService) Register(ctx context.Context, data dtos.UserRegister) (dto
 // time comparison to prevent timing attacks. When no use is found by the provided email
 // address, the same error is returned to prevent user enumeration.
 func (s *UserService) Authenticate(ctx context.Context, data dtos.UserAuthenticate) (dtos.UserSession, error) {
-	dbsuer, err := s.db.UserByEmail(ctx, data.Email)
+	dbuser, err := s.db.UserByEmail(ctx, data.Email)
 	if err != nil {
 		// This is to prevent timing attacks ensuring that when no user is found we
 		// still perform the same amount of work as when a user is found.
