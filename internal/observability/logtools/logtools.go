@@ -9,9 +9,10 @@ import (
 )
 
 type Config struct {
-	Level string `json:"level" conf:"default:debug"`
-	Style string `json:"style" conf:"default:console"`
-	Color bool   `json:"color" conf:"default:true"`
+	Level   string `json:"level"   conf:"default:debug"`
+	Style   string `json:"style"   conf:"default:console"`
+	Color   bool   `json:"color"   conf:"default:true"`
+	LogFile string `json:"logFile"`
 }
 
 // New returns a new logger with the given level and style.
@@ -32,13 +33,23 @@ func New(cfg Config, hooks ...zerolog.Hook) (zerolog.Logger, error) {
 		logWriter = os.Stdout
 	}
 
-	l := zerolog.New(logWriter).
-		With().
+	var logger zerolog.Logger
+	if cfg.LogFile == "" {
+		logger = zerolog.New(logWriter)
+	} else {
+		runLogFile, err := os.OpenFile("gottl.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0664)
+		if err != nil {
+			panic(err)
+		}
+		logger = zerolog.New(zerolog.MultiLevelWriter(logWriter, runLogFile))
+	}
+
+	logger = logger.With().
 		Caller().    // adds the file and line number of the caller
 		Timestamp(). // adds a timestamp to each log line
 		Logger().
 		Level(lvl).
 		Hook(hooks...)
 
-	return l, nil
+	return logger, nil
 }

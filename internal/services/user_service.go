@@ -51,7 +51,7 @@ func (s *UserService) Register(ctx context.Context, data dtos.UserRegister) (dto
 // time comparison to prevent timing attacks. When no use is found by the provided email
 // address, the same error is returned to prevent user enumeration.
 func (s *UserService) Authenticate(ctx context.Context, data dtos.UserAuthenticate) (dtos.UserSession, error) {
-	dbsuer, err := s.db.UserByEmail(ctx, data.Email)
+	dbuser, err := s.db.UserByEmail(ctx, data.Email)
 	if err != nil {
 		// This is to prevent timing attacks ensuring that when no user is found we
 		// still perform the same amount of work as when a user is found.
@@ -64,12 +64,12 @@ func (s *UserService) Authenticate(ctx context.Context, data dtos.UserAuthentica
 		return dtos.UserSession{}, ErrInvalidLogin
 	}
 
-	if !hasher.CheckPasswordHash(data.Password, dbsuer.PasswordHash) {
+	if !hasher.CheckPasswordHash(data.Password, dbuser.PasswordHash) {
 		s.l.Error().Err(err).Str("email", data.Email).Msg("password verification failed")
 		return dtos.UserSession{}, ErrInvalidLogin
 	}
 
-	return s.createSession(ctx, s.mapper.Map(dbsuer))
+	return s.createSession(ctx, s.mapper.Map(dbuser))
 }
 
 // SessionVerify validates a user's session token and returns the user if the token is valid

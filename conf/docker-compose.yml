@@ -1,4 +1,16 @@
 services:
+  postgres:
+    image: postgres:16-alpine
+    ports:
+      - 5432:5432
+    volumes:
+      - postgres:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_DB=postgers
+    labels:
+      logging: "promtail"
   caddy:
     image: caddy:latest
     entrypoint: caddy run --config /root/Caddyfile
@@ -10,5 +22,52 @@ services:
       - "80:80"
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    labels:
+      logging: "promtail"
+  loki:
+    image: grafana/loki:latest
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/local-config.yaml
+    labels:
+      logging: "promtail"
+  promtail:
+    image: grafana/promtail:latest
+    volumes:
+      - $PWD/gottl.log:/logs/gottl.log
+      - $PWD/conf/promtail.dev.yaml:/promtail.config.yml
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: -config.file=/promtail.config.yml
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_PATHS_PROVISIONING=/etc/grafana/provisioning
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+    entrypoint:
+      - sh
+      - -euc
+      - |
+        mkdir -p /etc/grafana/provisioning/datasources
+        cat <<EOF > /etc/grafana/provisioning/datasources/ds.yaml
+        apiVersion: 1
+        datasources:
+        - name: Loki
+          type: loki
+          access: proxy
+          orgId: 1
+          url: http://loki:3100
+          basicAuth: false
+          isDefault: true
+          version: 1
+          editable: false
+        EOF
+        /run.sh
+    labels:
+      logging: "promtail"
 volumes:
   caddy:
+  postgres:
