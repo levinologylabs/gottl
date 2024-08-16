@@ -11,10 +11,14 @@ import (
 
 type UserController struct {
 	userservice *services.UserService
+	pwservice   *services.PasswordService
 }
 
-func NewAuthController(userservice *services.UserService) *UserController {
-	return &UserController{userservice: userservice}
+func NewAuthController(userservice *services.UserService, pwservice *services.PasswordService) *UserController {
+	return &UserController{
+		userservice: userservice,
+		pwservice:   pwservice,
+	}
 }
 
 // Register godoc
@@ -108,4 +112,52 @@ func (uc *UserController) Update(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	return server.JSON(w, http.StatusOK, updated)
+}
+
+// ResetPasswordRequest godoc
+//
+//	@Tags			User
+//	@Summary		Request a password reset
+//	@Description	Request a password reset
+//	@Accept			json
+//	@Produce		json
+//	@Param			user	body		dtos.PasswordResetRequest	true	"User details"
+//	@Success		204		{object} nil
+//	@Router			/api/v1/users/request-password-reset [POST]
+func (uc *UserController) ResetPasswordRequest(w http.ResponseWriter, r *http.Request) error {
+	body, err := extractors.Body[dtos.PasswordResetRequest](r)
+	if err != nil {
+		return err
+	}
+
+	err = uc.pwservice.RequestReset(r.Context(), body)
+	if err != nil {
+		return err
+	}
+
+	return server.JSON(w, http.StatusNoContent, nil)
+}
+
+// ResetPassword godoc
+//
+//	@Tags			User
+//	@Summary		Reset a user's password
+//	@Description	Reset a user's password
+//	@Accept			json
+//	@Produce		json
+//	@Param			user	body		dtos.PasswordReset	true	"User details"
+//	@Success		204		{object} nil
+//	@Router			/api/v1/users/reset-password [POST]
+func (uc *UserController) ResetPassword(w http.ResponseWriter, r *http.Request) error {
+	body, err := extractors.Body[dtos.PasswordReset](r)
+	if err != nil {
+		return err
+	}
+
+	err = uc.pwservice.Reset(r.Context(), body)
+	if err != nil {
+		return err
+	}
+
+	return server.JSON(w, http.StatusNoContent, nil)
 }

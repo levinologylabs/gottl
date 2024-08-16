@@ -8,7 +8,9 @@ import (
 	"github.com/ardanlabs/conf/v3"
 	"github.com/jalevin/gottl/internal/data/db"
 	"github.com/jalevin/gottl/internal/observability/logtools"
+	"github.com/jalevin/gottl/internal/services"
 	"github.com/jalevin/gottl/internal/web"
+	"github.com/jalevin/gottl/internal/worker"
 )
 
 type Config struct {
@@ -16,6 +18,8 @@ type Config struct {
 	Web      web.Config
 	Logs     logtools.Config
 	Postgres db.Config
+	Worker   worker.Config
+	App      services.Config
 }
 
 var (

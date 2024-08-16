@@ -22,7 +22,7 @@ func Check(val any) error {
 		fields := make(FieldErrors, 0, len(verrors))
 		for _, verr := range verrors {
 			field := FieldError{
-				Field:     verr.Tag(),
+				Field:   verr.Tag(),
 				Value:   verr.Value(),
 				Message: verr.Error(),
 			}

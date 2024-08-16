@@ -14,6 +14,7 @@ import (
 	"github.com/jalevin/gottl/internal/services"
 	"github.com/jalevin/gottl/internal/web"
 	"github.com/jalevin/gottl/internal/web/mid"
+	"github.com/jalevin/gottl/internal/worker"
 )
 
 // @title                      Gottl API
@@ -60,8 +61,11 @@ func run() error {
 		}
 	}()
 
-	svc := services.NewService(logger, queries)
-	apisvr := web.New(cfg.Version.Build, cfg.Web, logger, svc)
+	var (
+		wkr    = worker.New(cfg.Worker, queries)
+		svc    = services.NewService(cfg.App, logger, queries, wkr)
+		apisvr = web.New(cfg.Version.Build, cfg.Web, logger, svc)
+	)
 
 	go func() {
 		defer wg.Done()
@@ -70,6 +74,8 @@ func run() error {
 			logger.Error().Err(err).Msg("server error")
 		}
 	}()
+
+	go wkr.Start(ctx)
 
 	wg.Wait()
 

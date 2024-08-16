@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS user_action_tokens (
     expires_at TIMESTAMP NOT NULL,
     user_id UUID NOT NULL REFERENCES users (id) ON DELETE CASCADE,
     token BYTEA NOT NULL,
-    action VARCHAR(255) NOT NULL CHECK (TYPE IN ('password_reset'))
+    action VARCHAR(255) NOT NULL CHECK (action IN ('password_reset'))
 );
 
 CREATE UNIQUE INDEX IF NOT EXISTS user_action_tokens_token_idx ON user_action_tokens (token);
