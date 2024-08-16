@@ -64,7 +64,7 @@ func (s *UserService) Authenticate(ctx context.Context, data dtos.UserAuthentica
 		return dtos.UserSession{}, ErrInvalidLogin
 	}
 
-	if !hasher.CheckPasswordHash(data.Password, dbsuer.PasswordHash) {
+	if !hasher.CheckPasswordHash(data.Password, dbuser.PasswordHash) {
 		s.l.Error().Err(err).Str("email", data.Email).Msg("password verification failed")
 		return dtos.UserSession{}, ErrInvalidLogin
 	}

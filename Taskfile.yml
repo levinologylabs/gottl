@@ -14,6 +14,7 @@ tasks:
     cmds:
       - go install github.com/swaggo/swag/cmd/swag@latest
       - go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
+      - brew install golangci-lint
     silent: false
   run:
     desc: Runs the main application and supports passing CLI args
