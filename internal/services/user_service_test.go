@@ -23,9 +23,8 @@ type UserServiceTestCtx struct {
 
 func SetupUserServiceTest(t *testing.T) UserServiceTestCtx {
 	var (
-		logger  = testlib.Logger(t)
-		queries = testlib.NewDatabase(t, logger)
-		s       = services.NewUserService(logger, queries)
+		base = SetupServiceTest(t)
+		s    = services.NewUserService(base.logger, base.db)
 	)
 
 	return UserServiceTestCtx{

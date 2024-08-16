@@ -1,3 +1,4 @@
+// Package worker provides the worker that processes the tasks.
 package worker
 
 import (

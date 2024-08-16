@@ -29,12 +29,12 @@ func NewPasswordService(cfg Config, l zerolog.Logger, db *db.QueriesExt, queue t
 	}
 }
 
-func (s *PasswordService) RequestReset(ctx context.Context, data dtos.PasswordResetRequest) error {
+func (s *PasswordService) RequestReset(ctx context.Context, data dtos.PasswordResetRequest) (string, error) {
 	usr, err := s.db.UserByEmail(ctx, data.Email)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			s.l.Warn().Str("email", data.Email).Msg("user not found for password reset request")
-			return nil
+			return "", nil
 		}
 	}
 
@@ -46,10 +46,10 @@ func (s *PasswordService) RequestReset(ctx context.Context, data dtos.PasswordRe
 		ExpiresAt: time.Now().Add(24 * time.Hour),
 	})
 	if err != nil {
-		return err
+		return "", err
 	}
 
-	return s.queue.Enqueue(tasks.Task{
+	err = s.queue.Enqueue(tasks.Task{
 		ID: tasks.TaskIDSendEmail,
 		Payload: tasks.TaskDataSendEmail{
 			Email:   data.Email,
@@ -57,6 +57,11 @@ func (s *PasswordService) RequestReset(ctx context.Context, data dtos.PasswordRe
 			Body:    emailtemplates.PasswordReset(s.cfg.CompanyName, s.cfg.WebURL, token.Raw),
 		},
 	})
+	if err != nil {
+		return "", err
+	}
+
+	return token.Raw, nil
 }
 
 func (s *PasswordService) Reset(ctx context.Context, data dtos.PasswordReset) error {

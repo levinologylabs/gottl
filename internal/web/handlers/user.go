@@ -130,7 +130,7 @@ func (uc *UserController) ResetPasswordRequest(w http.ResponseWriter, r *http.Re
 		return err
 	}
 
-	err = uc.pwservice.RequestReset(r.Context(), body)
+	_, err = uc.pwservice.RequestReset(r.Context(), body)
 	if err != nil {
 		return err
 	}
