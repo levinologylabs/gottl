@@ -6,6 +6,7 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jalevin/gottl/internal/core/server"
+	"github.com/jalevin/gottl/internal/core/validate"
 	"github.com/jalevin/gottl/internal/services"
 	"github.com/rs/zerolog"
 )
@@ -51,6 +52,9 @@ func ErrorHandler(log zerolog.Logger) ErrorAdapter {
 			// is embedded in the error message.
 			bldr := server.Err(err).Msg("unknown error")
 
+			var respInvalidRouteKeyErr *validate.InvalidRouteKeyError
+			var respFieldErrorsErr validate.FieldErrors
+
 			switch {
 			case errors.Is(err, pgx.ErrNoRows):
 				bldr.Status(http.StatusNotFound).
@@ -58,6 +62,13 @@ func ErrorHandler(log zerolog.Logger) ErrorAdapter {
 			case errors.Is(err, services.ErrNotAdmin):
 				bldr.Status(http.StatusForbidden).
 					Msg("forbidden")
+			case errors.As(err, &respInvalidRouteKeyErr):
+				bldr.Status(http.StatusBadRequest).
+					Msg(respInvalidRouteKeyErr.Error())
+			case errors.As(err, &respFieldErrorsErr):
+				bldr.Status(http.StatusUnprocessableEntity).
+					Msg("invalid request").
+					Data(respFieldErrorsErr)
 			default:
 				bldr.Status(http.StatusInternalServerError).
 					Msg("internal server error")
