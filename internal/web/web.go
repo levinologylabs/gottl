@@ -12,6 +12,7 @@ import (
 	"github.com/jalevin/gottl/internal/web/docs"
 	"github.com/jalevin/gottl/internal/web/handlers"
 	"github.com/jalevin/gottl/internal/web/mid"
+	"github.com/riandyrn/otelchi"
 	"github.com/rs/zerolog"
 )
 
@@ -67,6 +68,7 @@ func (web *Web) routes(build string) http.Handler {
 		middleware.CleanPath,
 		middleware.StripSlashes,
 		mid.RequestID(),
+		otelchi.Middleware("gottl", otelchi.WithChiRoutes(mux)),
 		mid.Logger(web.logger),
 		middleware.AllowContentType("application/json", "text/plain", "text/html"),
 	)

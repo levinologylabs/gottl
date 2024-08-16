@@ -4,15 +4,19 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"os/signal"
 	"sync"
+	"time"
 
 	"github.com/jalevin/gottl/internal/data/db"
 	"github.com/jalevin/gottl/internal/observability/logtools"
+	"github.com/jalevin/gottl/internal/observability/otel"
 	"github.com/jalevin/gottl/internal/web"
 	"github.com/jalevin/gottl/internal/web/mid"
+	"go.opentelemetry.io/contrib/instrumentation/runtime"
 )
 
 // @title                      Gottl API
@@ -42,8 +46,20 @@ func run() error {
 		return fmt.Errorf("creating logger: %w", err)
 	}
 
+	err = runtime.Start(runtime.WithMinimumReadMemStatsInterval(time.Second))
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer cancel()
+
+	ots := otel.NewOtelService(ctx, logger, cfg.Otel)
+	defer func() {
+		if err := ots.Shutdown(ctx); err != nil {
+			logger.Debug().Msgf("Error shutting down otel: %v", err)
+		}
+	}()
 
 	apisvr := web.New(cfg.Version.Build, cfg.Web, logger)
 

@@ -1,10 +1,14 @@
+---
 server:
   http_listen_port: 0
   grpc_listen_port: 0
+
 positions:
   filename: /tmp/positions.yaml
+
 clients:
   - url: http://loki:3100/loki/api/v1/push
+
 scrape_configs:
   - job_name: gottl
     static_configs:
@@ -15,6 +19,7 @@ scrape_configs:
           app: gottl
           container: gottl
           __path__: /logs/gottl.log
+
   - job_name: flog_scrape
     docker_sd_configs:
       - host: unix:///var/run/docker.sock
