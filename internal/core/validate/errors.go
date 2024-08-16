@@ -7,7 +7,7 @@ import (
 
 // FieldError is used to indicate an error with a specific request field.
 type FieldError struct {
-	Tag     string `json:"tag"`
+	Field   string `json:"field"`
 	Message string `json:"error"`
 	Value   any    `json:"value"`
 }
