@@ -69,7 +69,7 @@ func (s *UserService) Authenticate(ctx context.Context, data dtos.UserAuthentica
 		return dtos.UserSession{}, ErrInvalidLogin
 	}
 
-	return s.createSession(ctx, s.mapper.Map(dbsuer))
+	return s.createSession(ctx, s.mapper.Map(dbuser))
 }
 
 // SessionVerify validates a user's session token and returns the user if the token is valid
