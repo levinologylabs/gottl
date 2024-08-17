@@ -46,9 +46,6 @@ func TraceID() func(http.Handler) http.Handler {
 			if tid == "" {
 				tid = strings.ReplaceAll(uuid.New().String(), "-", "")
 			}
-
-			w.Header().Add("X-Trace-ID", tid)
-
 			r = r.WithContext(context.WithValue(r.Context(), reqCtxKeyType, tid))
 			h.ServeHTTP(w, r)
 		})

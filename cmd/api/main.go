@@ -54,14 +54,14 @@ func run() error {
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer cancel()
 
-	ots := otel.NewOtelService(ctx, logger, cfg.Otel)
+	os := otel.NewOtelService(ctx, logger, cfg.Otel)
 	defer func() {
-		if err := ots.Shutdown(ctx); err != nil {
+		if err := os.Shutdown(ctx); err != nil {
 			logger.Debug().Msgf("Error shutting down otel: %v", err)
 		}
 	}()
 
-	apisvr := web.New(cfg.Version.Build, cfg.Web, logger)
+	apisvr := web.New(cfg.Version.Build, cfg.Web, logger, os)
 
 	wg := sync.WaitGroup{}
 	wg.Add(1)

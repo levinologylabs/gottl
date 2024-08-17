@@ -9,6 +9,7 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
 	"github.com/jalevin/gottl/internal/data/dtos"
+	"github.com/jalevin/gottl/internal/observability/otel"
 	"github.com/jalevin/gottl/internal/web/docs"
 	"github.com/jalevin/gottl/internal/web/handlers"
 	"github.com/jalevin/gottl/internal/web/mid"
@@ -20,17 +21,20 @@ type Web struct {
 	cfg    Config
 	server *http.Server
 	logger zerolog.Logger
+	os     *otel.OtelService
 }
 
 func New(
 	build string,
 	conf Config,
 	logger zerolog.Logger,
+	os *otel.OtelService,
 ) *Web {
 	w := &Web{
 		build:  build,
 		logger: logger,
 		cfg:    conf,
+		os:     os,
 	}
 
 	mux := w.routes(build)
@@ -62,8 +66,8 @@ func (web *Web) Start(ctx context.Context) error {
 func (web *Web) routes(build string) http.Handler {
 	mux := chi.NewRouter()
 	mux.Use(
-		mid.Tracing("gottl", mux),
 		middleware.Recoverer,
+		mid.Tracing("gottl", mux, web.os),
 		middleware.RealIP,
 		middleware.CleanPath,
 		middleware.StripSlashes,

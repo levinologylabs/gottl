@@ -14,14 +14,13 @@ import (
 	sdkmetric "go.opentelemetry.io/otel/sdk/metric"
 	sdkresource "go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
-	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
 	"go.opentelemetry.io/otel/trace/noop"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
 
 type Config struct {
-	ServiceName string
+	ServiceName string `conf:"default:gottl"`
 	Enabled     bool   `conf:"default:true"`
 	OTLPAddress string `conf:"default:localhost:4317"`
 	Secure      bool   `conf:"default:false"`
@@ -31,9 +30,9 @@ type OtelService struct {
 	logger         zerolog.Logger
 	cfg            Config
 	shutdownFuncs  []func(context.Context) error
-	traceProvider  *sdktrace.TracerProvider
-	metricProvider *sdkmetric.MeterProvider
-	resource       *sdkresource.Resource
+	TraceProvider  *sdktrace.TracerProvider
+	MetricProvider *sdkmetric.MeterProvider
+	Resource       *sdkresource.Resource
 }
 
 var (
@@ -61,7 +60,7 @@ func (os *OtelService) init(ctx context.Context) {
 		return
 	}
 
-	os.resource = os.initResource(ctx)
+	os.Resource = os.initResource(ctx)
 
 	conn, err := grpc.NewClient(os.cfg.OTLPAddress,
 		// Note the use of insecure transport here. TLS is recommended in production.
@@ -71,10 +70,13 @@ func (os *OtelService) init(ctx context.Context) {
 		os.logger.Fatal().Msgf("Error establishing grpc connection: %v", err)
 	}
 
-	os.traceProvider = os.initTracerProvider(ctx, conn, os.resource)
-	os.metricProvider = os.initMeterProvider(ctx, conn, os.resource)
+	os.TraceProvider = os.initTracerProvider(ctx, conn, os.Resource)
+	os.MetricProvider = os.initMeterProvider(ctx, conn, os.Resource)
 
-	os.shutdownFuncs = append(os.shutdownFuncs, os.traceProvider.Shutdown, os.metricProvider.Shutdown)
+	os.shutdownFuncs = append(os.shutdownFuncs,
+		os.TraceProvider.Shutdown,
+		os.MetricProvider.Shutdown,
+	)
 }
 
 // Shutdown calls cleanup functions registered via shutdownFuncs.
@@ -112,7 +114,7 @@ func (os *OtelService) initMeterProvider(ctx context.Context, conn *grpc.ClientC
 
 	mp := sdkmetric.NewMeterProvider(
 		sdkmetric.WithReader(sdkmetric.NewPeriodicReader(exporter)),
-		sdkmetric.WithResource(os.initResource(ctx)),
+		sdkmetric.WithResource(res),
 	)
 	otel.SetMeterProvider(mp)
 	return mp
@@ -123,7 +125,7 @@ func (os *OtelService) initResource(ctx context.Context) *sdkresource.Resource {
 		extraResources, _ := sdkresource.New(
 			ctx,
 			// temp, get this from the config
-			sdkresource.WithAttributes(semconv.ServiceNameKey.String(os.cfg.ServiceName)),
+			//sdkresource.WithAttributes(semconv.ServiceNameKey.String(os.cfg.ServiceName)),
 			sdkresource.WithOS(),
 			sdkresource.WithProcess(),
 			sdkresource.WithContainer(),
