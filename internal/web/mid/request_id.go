@@ -3,51 +3,62 @@ package mid
 import (
 	"context"
 	"net/http"
+	"strings"
 
 	"github.com/google/uuid"
 	"github.com/jalevin/gottl/internal/core/server"
 	"github.com/rs/zerolog"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/trace"
 )
 
-// RequestIDTraceHook is a zerolog hook that adds the request ID to the log
-// output.
-type RequestIDTraceHook struct{}
+var tracer = otel.Tracer("gottl")
 
-func (h RequestIDTraceHook) Run(e *zerolog.Event, level zerolog.Level, msg string) {
+// TraceIDTraceHook is a zerolog hook that adds the trace ID to the log
+// output.
+type TraceIDTraceHook struct{}
+
+func (h TraceIDTraceHook) Run(e *zerolog.Event, level zerolog.Level, msg string) {
 	ctx := e.GetCtx()
-	requestID := getRequestIDFromContext(ctx)
-	if requestID == "" {
+	_, traceID := GetTraceIDFromContext(ctx)
+	if traceID == "" {
 		return
 	}
 
-	e.Str("rid", requestID)
+	e.Str("trace_id", traceID)
 }
 
 type reqCtxKey string
 
-const reqCtxKeyType reqCtxKey = "request_id"
+const reqCtxKeyType reqCtxKey = "trace_id"
 
-func getRequestIDFromContext(ctx context.Context) string {
-	if ctx == nil {
-		return ""
+func GetTraceIDFromContext(ctx context.Context) (context.Context, string) {
+	spanCtx := trace.SpanContextFromContext(ctx)
+	if spanCtx.HasTraceID() {
+		traceID := spanCtx.TraceID()
+		return ctx, traceID.String()
 	}
-	if requestID, ok := ctx.Value(reqCtxKeyType).(string); ok {
-		return requestID
-	}
-	return ""
+
+	ctx, span := tracer.Start(ctx, "Root")
+	spanCtx = trace.SpanContextFromContext(ctx)
+	defer span.End()
+
+	return ctx, spanCtx.TraceID().String()
 }
 
-func RequestID() func(http.Handler) http.Handler {
-	server.SetRequestIDFunc(getRequestIDFromContext)
+func TraceID() func(http.Handler) http.Handler {
+	server.SetTraceIDFunc(GetTraceIDFromContext)
 
 	return func(h http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			rid := r.Header.Get("X-Request-ID")
-			if rid == "" {
-				rid = uuid.New().String()
+			tid := r.Header.Get("X-Trace-ID")
+			if tid == "" {
+				tid = strings.ReplaceAll(uuid.New().String(), "-", "")
 			}
 
-			r = r.WithContext(context.WithValue(r.Context(), reqCtxKeyType, rid))
+			w.Header().Add("X-Trace-ID", tid)
+
+			r = r.WithContext(context.WithValue(r.Context(), reqCtxKeyType, tid))
 			h.ServeHTTP(w, r)
 		})
 	}

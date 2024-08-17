@@ -18,6 +18,9 @@ import (
 //	@Router			/api/v1/status [GET]
 func Info(resp dtos.StatusResponse) func(w http.ResponseWriter, r *http.Request) error {
 	return func(w http.ResponseWriter, r *http.Request) error {
+
+		// start here - check and see if we have a traceid on the context
+
 		_, span := tracer.Start(r.Context(), "handlers.info")
 		defer span.End()
 

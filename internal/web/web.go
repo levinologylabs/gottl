@@ -67,7 +67,7 @@ func (web *Web) routes(build string) http.Handler {
 		middleware.RealIP,
 		middleware.CleanPath,
 		middleware.StripSlashes,
-		mid.RequestID(),
+		mid.TraceID(),
 		otelchi.Middleware("gottl", otelchi.WithChiRoutes(mux)),
 		mid.Logger(web.logger),
 		middleware.AllowContentType("application/json", "text/plain", "text/html"),
@@ -78,7 +78,7 @@ func (web *Web) routes(build string) http.Handler {
 	mux.Use(cors.Handler(cors.Options{
 		AllowedOrigins:   web.cfg.Origins(),
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token", "X-Request-ID"},
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token", "X-Trace-ID"},
 		ExposedHeaders:   []string{"Link"},
 		AllowCredentials: false,
 		MaxAge:           300, // Maximum value not ignored by any of major browsers

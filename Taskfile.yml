@@ -21,13 +21,13 @@ tasks:
       - db:sqlc
       - swag
     cmds:
-      - docker compose -f ./conf/docker-compose.yml up --detach
+      - docker compose -f ./dev-stack/docker-compose.yml up --detach
       - go run ./cmd/api/*.go {{ .CLI_ARGS }}
     silent: false
   docker:
     desc: Runs docker compose with config. `task docker -- down` you must use the --
     cmds:
-      - docker compose -f ./conf/docker-compose.yml {{ .CLI_ARGS }}
+      - docker compose -f ./dev-stack/docker-compose.yml {{ .CLI_ARGS }}
   build:
     desc: Builds the backend binary
     cmds:

@@ -41,7 +41,7 @@ func run() error {
 		os.Exit(1)
 	}
 
-	logger, err := logtools.New(cfg.Logs, mid.RequestIDTraceHook{})
+	logger, err := logtools.New(cfg.Logs, mid.TraceIDTraceHook{})
 	if err != nil {
 		return fmt.Errorf("creating logger: %w", err)
 	}

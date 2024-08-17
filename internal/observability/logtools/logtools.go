@@ -12,7 +12,7 @@ type Config struct {
 	Level   string `json:"level"   conf:"default:debug"`
 	Style   string `json:"style"   conf:"default:console"`
 	Color   bool   `json:"color"   conf:"default:true"`
-	LogFile string `json:"logFile"`
+	LogFile string `json:"logFile" conf:"default:logs/gottl.dev.log"`
 }
 
 // New returns a new logger with the given level and style.
@@ -37,7 +37,7 @@ func New(cfg Config, hooks ...zerolog.Hook) (zerolog.Logger, error) {
 	if cfg.LogFile == "" {
 		logger = zerolog.New(logWriter)
 	} else {
-		runLogFile, err := os.OpenFile("gottl.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0664)
+		runLogFile, err := os.OpenFile(cfg.LogFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0664)
 		if err != nil {
 			panic(err)
 		}
