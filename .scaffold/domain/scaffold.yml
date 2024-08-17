@@ -1,0 +1,36 @@
+# yaml-language-server: $schema=https://hay-kot.github.io/scaffold/schema.json
+messages:
+  pre: |
+    # Domain Scaffold
+
+    This scaffold will generate the following files:
+      - Dtos in ./internal/data/dtos
+      - Service in ./internal/services
+      - Controller in ./internal/web/handlers
+
+  post: |
+    # Next Steps
+
+    You've done it! Next steps are to.
+
+    1. Generate your database migration with `task db:migrate -- <migration-name>`
+    2. Implement the Sql Queries and run sqlc
+    3. Implement the service
+
+questions:
+  - name: name
+    prompt:
+      message: Domain Name
+      description: The name of the domain enttiy (e.g. Post)
+
+computed:
+  domain_var: "{{ .Scaffold.name | toPascalCase }}"
+  domain_kebab: "{{ .Scaffold.name | kebabcase }}"
+
+rewrites:
+  - from: "templates/dtos.go"
+    to: "./internal/data/dtos/{{ .Scaffold.domain_name | snakecase }}.go"
+  - from: "templates/service.go"
+    to: "./internal/services/{{ .Scaffold.domain_name | snakecase }}_service.go"
+  - from: "templates/controller.go"
+    to: "./internal/web/handlers/{{ .Scaffold.domain_name | snakecase }}_handler.go"
