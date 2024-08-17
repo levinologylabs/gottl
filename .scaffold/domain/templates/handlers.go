@@ -26,18 +26,20 @@ func New{{ .Computed.domain_var }}Controller(service *services.{{ .Computed.doma
 // @Description List all {{ .Computed.domain_var }}s
 // @Accept     json
 // @Produce    json
-// @Success    200     {object}  dtops.PaginationResponse[dtos.{{ .Computed.domain_var }}]  "A list of {{ .Computed.domain_var }}s"
+// @Success    200     {object}  dtos.PaginationResponse[dtos.{{ .Computed.domain_var }}]  "A list of {{ .Computed.domain_var }}s"
 // @Router     /api/v1/{{ .Computed.domain_kebab }}s [GET]
-func (uc *{{ .Computed.domain_var }}Controller) List(w http.ResponseWriter, r *http.Request) error {
+func (uc *{{ .Computed.domain_var }}Controller) GetAll(w http.ResponseWriter, r *http.Request) error {
   page, err := extractors.Query[dtos.Pagination](r)
   if err != nil {
     return err
   }
 
-  entities, err := uc.service.List(r.Context(), page.WithDefaults())
+  entities, err := uc.service.GetAll(r.Context(), page.WithDefaults())
   if err != nil {
     return err
   }
+
+  return server.JSON(w, http.StatusOK, entities)
 }
 
 // {{ .Computed.domain_var }}Get godoc
@@ -73,8 +75,8 @@ func (uc *{{ .Computed.domain_var }}Controller) Get(w http.ResponseWriter, r *ht
 // @Accept     json
 // @Produce    json
 // @Param      {{ .Computed.domain_var }} body    dtos.{{ .Computed.domain_var }}Create  true  "The {{ .Computed.domain_var }} details"
-// @Success    201     {object}  dtos.{{ .Computed.domain_kebab }}
-// @Router     /api/v1/{{ .Computed.domain_var }}s [POST]
+// @Success    201     {object}  dtos.{{ .Computed.domain_var }}
+// @Router     /api/v1/{{ .Computed.domain_kebab }}s [POST]
 func (uc *{{ .Computed.domain_var }}Controller) Create(w http.ResponseWriter, r *http.Request) error {
   body, err := extractors.Body[dtos.{{ .Computed.domain_var }}Create](r)
   if err != nil {
@@ -106,7 +108,7 @@ func (uc *{{ .Computed.domain_var }}Controller) Update(w http.ResponseWriter, r 
     return err
   }
 
-  entity, err := uc.service.Update(r.Context(), body)
+  entity, err := uc.service.Update(r.Context(), id, body)
   if err != nil {
     return err
   }
@@ -130,11 +132,11 @@ func (uc *{{ .Computed.domain_var }}Controller) Delete(w http.ResponseWriter, r 
     return err
   }
 
-  err := uc.service.Delete(r.Context(), id)
+  err = uc.service.Delete(r.Context(), id)
   if err != nil {
     return err
   }
 
-  return server.NoContent(w)
+  return server.JSON(w, http.StatusNoContent, nil)
 }
 

@@ -1,12 +1,13 @@
 package services
 
-
 import (
-  "context"
+	"context"
+
+	"github.com/google/uuid"
 
 	"github.com/jalevin/gottl/internal/data/db"
 	"github.com/jalevin/gottl/internal/data/dtos"
-  "github.com/rs/zerolog"
+	"github.com/rs/zerolog"
 )
 
 type {{ .Computed.domain_var }}Service struct {
@@ -21,22 +22,22 @@ func New{{ .Computed.domain_var }}Service(l zerolog.Logger, db *db.QueriesExt) *
   }
 }
 
-func (s *{{ .Computed.domain_var}}Service) GetOne(ctx context.Contet, id uuid.UUID) (dtos.{{ .Computed.domain_var }}) {
+func (s *{{ .Computed.domain_var}}Service) Get(ctx context.Context, id uuid.UUID) (dtos.{{ .Computed.domain_var }}, error) {
   panic("not implemented")
 }
 
-func (s *{{ .Computed.domain_var}}Service) GetAll(ctx context.Contet, page dtos.Pagination) (dtos.PaginationResponse[dtos.{{ .Computed.domain_var }}]) {
+func (s *{{ .Computed.domain_var}}Service) GetAll(ctx context.Context, page dtos.Pagination) (dtos.PaginationResponse[dtos.{{ .Computed.domain_var }}], error) {
   panic("not implemented")
 }
 
-func (s *{{ .Computed.domain_var}}Service) Create(ctx context.Contet, data dtos.{{ .Computed.domain_var }}Create) (dtos.{{ .Computed.domain_var }}) {
+func (s *{{ .Computed.domain_var}}Service) Create(ctx context.Context, data dtos.{{ .Computed.domain_var }}Create) (dtos.{{ .Computed.domain_var }}, error) {
   panic("not implemented")
 }
 
-func (s *{{ .Computed.domain_var}}Service) Update(ctx context.Contet, id uuid.UUID, data dtos.{{ .Computed.domain_var }}Update) (dtos.{{ .Computed.domain_var }}) {
+func (s *{{ .Computed.domain_var}}Service) Update(ctx context.Context, id uuid.UUID, data dtos.{{ .Computed.domain_var }}Update) (dtos.{{ .Computed.domain_var }}, error) {
   panic("not implemented")
 }
 
-func (s *{{ .Computed.domain_var}}Service) Delete(ctx context.Contet, id uuid.UUID) {
+func (s *{{ .Computed.domain_var}}Service) Delete(ctx context.Context, id uuid.UUID) error {
   panic("not implemented")
 }
