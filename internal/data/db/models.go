@@ -25,10 +25,19 @@ type User struct {
 	SubscriptionEndedDate pgtype.Timestamp
 }
 
+type UserActionToken struct {
+	ID        uuid.UUID
+	CreatedAt time.Time
+	ExpiresAt time.Time
+	UserID    uuid.UUID
+	Token     []byte
+	Action    string
+}
+
 type UserSession struct {
 	ID        uuid.UUID
 	CreatedAt time.Time
+	ExpiresAt time.Time
 	UserID    uuid.UUID
 	Token     []byte
-	ExpiresAt time.Time
 }

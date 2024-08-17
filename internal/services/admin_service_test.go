@@ -4,7 +4,6 @@ import (
 	"context"
 	"testing"
 
-	"github.com/brianvoe/gofakeit/v7"
 	"github.com/jalevin/gottl/internal/data/dtos"
 	"github.com/jalevin/gottl/internal/services"
 	"github.com/jalevin/gottl/testlib"
@@ -12,48 +11,22 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-type AdminServiceTestCtx struct {
-	us        UserServiceTestCtx
-	ctx       context.Context
-	s         *services.AdminService
-	adminuser dtos.UserRegister
-}
-
-func SetupAdminServiceTest(t *testing.T) AdminServiceTestCtx {
-	us := SetupUserServiceTest(t)
-	var (
-		logger  = testlib.Logger(t)
-		queries = testlib.NewDatabase(t, logger)
-		s       = services.NewAdminService(logger, queries)
-	)
-	return AdminServiceTestCtx{
-		us:  us,
-		ctx: context.Background(),
-		s:   s,
-		adminuser: dtos.UserRegister{
-			Email:    gofakeit.Email(),
-			Username: gofakeit.Username(),
-			Password: gofakeit.Password(true, true, true, true, true, 14),
-		},
-	}
-}
-
 func Test_AdminService_GetAllUsers(t *testing.T) {
 	testlib.IntegrationGuard(t)
-	st := SetupAdminServiceTest(t)
+	var (
+		st = SetupServiceTest(t)
+		s  = services.NewAdminService(st.logger, st.db)
+	)
 
 	// Regular User cannot access method
-	_, err := st.s.GetAllUsers(st.ctx, dtos.Pagination{}.WithDefaults())
+	_, err := s.GetAllUsers(context.Background(), dtos.Pagination{}.WithDefaults())
 	require.Error(t, err)
 
-	_, err = st.s.Register(st.ctx, st.adminuser)
-	require.NoError(t, err)
-
 	// Admin User can access method
-	adminctx := services.WithVerifiedAdmin(st.ctx)
-	users, err := st.s.GetAllUsers(adminctx, dtos.Pagination{}.WithDefaults())
+	adminctx := services.WithVerifiedAdmin(context.Background())
+	users, err := s.GetAllUsers(adminctx, dtos.Pagination{}.WithDefaults())
 	require.NoError(t, err)
 
-	assert.Len(t, users.Items, 1)
-	assert.Equal(t, len(users.Items), users.Total)
+	// Two users created in SetupServiceTest
+	assert.Len(t, users.Items, 2)
 }

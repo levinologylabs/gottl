@@ -1,8 +1,8 @@
 package dtos
 
 type Pagination struct {
-	Skip  int `json:"skip"  validate:"required,gte=0"`
-	Limit int `json:"limit" validate:"required,gte=1,lte=100"`
+	Skip  int `json:"skip"  validate:"omitempty,gte=0"`
+	Limit int `json:"limit" validate:"omitempty,gte=1,lte=100"`
 }
 
 // WithDefaults returns a copy of Pagination where the defaults have been set

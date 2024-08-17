@@ -9,11 +9,13 @@ import (
 	"os/signal"
 	"sync"
 
+	"github.com/jalevin/gottl/internal/core/mailer"
 	"github.com/jalevin/gottl/internal/data/db"
 	"github.com/jalevin/gottl/internal/observability/logtools"
 	"github.com/jalevin/gottl/internal/services"
 	"github.com/jalevin/gottl/internal/web"
 	"github.com/jalevin/gottl/internal/web/mid"
+	"github.com/jalevin/gottl/internal/worker"
 )
 
 // @title                      Gottl API
@@ -60,8 +62,12 @@ func run() error {
 		}
 	}()
 
-	svc := services.NewService(logger, queries)
-	apisvr := web.New(cfg.Version.Build, cfg.Web, logger, svc)
+	var (
+		sender = mailer.NewSMTPSender(cfg.SMTP)
+		wkr    = worker.New(cfg.Worker, logger, queries, sender)
+		svc    = services.NewService(cfg.App, logger, queries, wkr)
+		apisvr = web.New(cfg.Version.Build, cfg.Web, logger, svc)
+	)
 
 	go func() {
 		defer wg.Done()
@@ -70,6 +76,8 @@ func run() error {
 			logger.Error().Err(err).Msg("server error")
 		}
 	}()
+
+	go wkr.Start(ctx)
 
 	wg.Wait()
 

@@ -13,51 +13,27 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// UserServiceTestCtx is a container type for housing common test data and setup login
-// for the user service tests.
-type UserServiceTestCtx struct {
-	ctx  context.Context
-	s    *services.UserService
-	user dtos.UserRegister
-}
-
-func SetupUserServiceTest(t *testing.T) UserServiceTestCtx {
-	var (
-		logger  = testlib.Logger(t)
-		queries = testlib.NewDatabase(t, logger)
-		s       = services.NewUserService(logger, queries)
-	)
-
-	return UserServiceTestCtx{
-		ctx: context.Background(),
-		s:   s,
-		user: dtos.UserRegister{
-			Email:    gofakeit.Email(),
-			Username: gofakeit.Username(),
-			Password: gofakeit.Password(true, true, true, true, true, 14),
-		},
-	}
-}
-
-func (ts *UserServiceTestCtx) RegisterUser(t *testing.T) dtos.User {
-	registerUser, err := ts.s.Register(context.Background(), ts.user)
-	require.NoError(t, err)
-	return registerUser
-}
-
 func Test_UserService_RegisterAndLogin(t *testing.T) {
 	testlib.IntegrationGuard(t)
-	st := SetupUserServiceTest(t)
+	sst := SetupServiceTest(t)
+	st := services.NewUserService(sst.logger, sst.db)
 
-	registerUser := st.RegisterUser(t)
-	assert.Equal(t, st.user.Email, registerUser.Email)
-	assert.Equal(t, st.user.Username, registerUser.Username)
+	user := dtos.UserRegister{
+		Email:    gofakeit.Email(),
+		Username: gofakeit.Username(),
+		Password: gofakeit.Password(true, true, true, true, true, 14),
+	}
+
+	registerUser, err := st.Register(context.Background(), user)
+	require.NoError(t, err)
+	assert.Equal(t, user.Email, registerUser.Email)
+	assert.Equal(t, user.Username, registerUser.Username)
 
 	// Login With Correct Password
 
-	session, err := st.s.Authenticate(context.Background(), dtos.UserAuthenticate{
-		Email:    st.user.Email,
-		Password: st.user.Password,
+	session, err := st.Authenticate(context.Background(), dtos.UserAuthenticate{
+		Email:    user.Email,
+		Password: user.Password,
 	})
 
 	require.NoError(t, err)
@@ -66,14 +42,14 @@ func Test_UserService_RegisterAndLogin(t *testing.T) {
 	assert.NotEmpty(t, session.Token)
 	assert.True(t, session.ExpiresAt.After(time.Now()))
 
-	loginUser, err := st.s.SessionVerify(st.ctx, session.Token)
+	loginUser, err := st.SessionVerify(context.Background(), session.Token)
 	require.NoError(t, err)
 
 	assert.Equal(t, registerUser, loginUser)
 
 	// Login With Wrong Password Fails
-	_, err = st.s.Authenticate(context.Background(), dtos.UserAuthenticate{
-		Email:    st.user.Email,
+	_, err = st.Authenticate(context.Background(), dtos.UserAuthenticate{
+		Email:    user.Email,
 		Password: "wrongpassword",
 	})
 
@@ -84,33 +60,32 @@ func Test_UserService_GetUser(t *testing.T) {
 	testlib.IntegrationGuard(t)
 
 	var (
-		st   = SetupUserServiceTest(t)
-		user = st.RegisterUser(t)
+		sst = SetupServiceTest(t)
+		st  = services.NewUserService(sst.logger, sst.db)
 	)
 
-	userByID, err := st.s.GetByID(st.ctx, user.ID)
+	userByEmail, err := st.GetByEmail(context.Background(), sst.user.Email)
 	require.NoError(t, err)
 
-	assert.Equal(t, user, userByID)
-
-	userByEmail, err := st.s.GetByEmail(st.ctx, user.Email)
+	userByID, err := st.GetByID(context.Background(), userByEmail.ID)
 	require.NoError(t, err)
 
-	assert.Equal(t, user, userByEmail)
+	assert.Equal(t, userByEmail, userByID)
 }
 
 func Test_UserService_DeleteUser(t *testing.T) {
 	testlib.IntegrationGuard(t)
 
 	var (
-		st   = SetupUserServiceTest(t)
-		user = st.RegisterUser(t)
+		st   = SetupServiceTest(t)
+		s    = services.NewUserService(st.logger, st.db)
+		user = st.dbuser
 	)
 
-	err := st.s.Delete(st.ctx, user.ID)
+	err := s.Delete(context.Background(), user.ID)
 	require.NoError(t, err)
 
-	_, err = st.s.GetByID(st.ctx, user.ID)
+	_, err = s.GetByID(context.Background(), user.ID)
 	require.Error(t, err)
 }
 
@@ -118,12 +93,13 @@ func Test_UserService_UpdateUser(t *testing.T) {
 	testlib.IntegrationGuard(t)
 
 	var (
-		st   = SetupUserServiceTest(t)
-		user = st.RegisterUser(t)
+		st   = SetupServiceTest(t)
+		s    = services.NewUserService(st.logger, st.db)
+		user = st.dbuser
 	)
 
 	// Patch the user's email address
-	updatedUser, err := st.s.UpdateDetails(st.ctx, user.ID, dtos.UserUpdate{
+	updatedUser, err := s.UpdateDetails(context.Background(), user.ID, dtos.UserUpdate{
 		Email:    testlib.Ptr("new@example.com"),
 		Username: nil,
 		Password: nil,
@@ -141,7 +117,7 @@ func Test_UserService_UpdateUser(t *testing.T) {
 		SubscriptionEndedDate: testlib.Ptr(time.Now().Add(time.Hour * 24 * 30).UTC()),
 	}
 
-	updatedUser, err = st.s.UpdateSubscription(st.ctx, user.ID, subdata)
+	updatedUser, err = s.UpdateSubscription(context.Background(), user.ID, subdata)
 
 	require.NoError(t, err)
 

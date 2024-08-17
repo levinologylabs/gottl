@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/jalevin/gottl/internal/core/tasks"
 	"github.com/jalevin/gottl/internal/data/db"
 	"github.com/jalevin/gottl/internal/data/dtos"
 	"github.com/jalevin/gottl/internal/services"
@@ -17,7 +18,7 @@ type Seed struct {
 }
 
 func seed(q *db.QueriesExt, cfg Seed) error {
-	svcs := services.NewService(log.Logger, q)
+	svcs := services.NewService(services.Config{}, log.Logger, q, tasks.NoopQueue)
 
 	user, err := svcs.Admin.Register(context.Background(), dtos.UserRegister{
 		Email:    cfg.Email,

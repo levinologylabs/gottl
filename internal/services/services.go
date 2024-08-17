@@ -2,19 +2,27 @@
 package services
 
 import (
+	"github.com/jalevin/gottl/internal/core/tasks"
 	"github.com/jalevin/gottl/internal/data/db"
 	"github.com/rs/zerolog"
 )
 
 // Service is a collection of all services in the application
 type Service struct {
-	Admin *AdminService
-	Users *UserService
+	Admin     *AdminService
+	Users     *UserService
+	Passwords *PasswordService
 }
 
-func NewService(l zerolog.Logger, db *db.QueriesExt) *Service {
+func NewService(
+	cfg Config,
+	l zerolog.Logger,
+	db *db.QueriesExt,
+	queue tasks.Queue,
+) *Service {
 	return &Service{
-		Admin: NewAdminService(l, db),
-		Users: NewUserService(l, db),
+		Admin:     NewAdminService(l, db),
+		Users:     NewUserService(l, db),
+		Passwords: NewPasswordService(cfg, l, db, queue),
 	}
 }
