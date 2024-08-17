@@ -12,6 +12,7 @@ type Service struct {
 	Admin     *AdminService
 	Users     *UserService
 	Passwords *PasswordService
+  // $scaffold_inject_service
 }
 
 func NewService(
@@ -24,5 +25,6 @@ func NewService(
 		Admin:     NewAdminService(l, db),
 		Users:     NewUserService(l, db),
 		Passwords: NewPasswordService(cfg, l, db, queue),
+    // $scaffold_inject_service_constructor
 	}
 }
