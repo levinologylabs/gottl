@@ -107,13 +107,16 @@ func (web *Web) routes(build string) http.Handler {
 	userctrl := handlers.NewAuthController(web.s.Users, web.s.Passwords)
 
 	mux.HandleFunc("POST /api/v1/users", adapter.Adapt(userctrl.Register))
-	mux.HandleFunc("POST /api/v1/users/login", adapter.Adapt(userctrl.Authenticate))
-	mux.HandleFunc("POST /api/v1/users/reset-password-request", adapter.Adapt(userctrl.ResetPasswordRequest))
-	mux.HandleFunc("POST /api/v1/users/reset-password", adapter.Adapt(userctrl.ResetPassword))
 
-	if web.cfg.Google.ClientID != "" {
+	if web.cfg.Auth.IsLocalEnabled() {
+		mux.HandleFunc("POST /api/v1/users/login", adapter.Adapt(userctrl.Authenticate))
+		mux.HandleFunc("POST /api/v1/users/reset-password-request", adapter.Adapt(userctrl.ResetPasswordRequest))
+		mux.HandleFunc("POST /api/v1/users/reset-password", adapter.Adapt(userctrl.ResetPassword))
+	}
+
+	if web.cfg.Auth.IsGoogleEnabled() {
 		web.logger.Info().Msg("google oauth enabled")
-		google := oauthhandler.NewGoogleAuthController(web.logger, web.cfg.Google, web.services.Users)
+		google := oauthhandler.NewGoogleAuthController(web.logger, web.cfg.Auth.Google, web.services.Users)
 
 		mux.HandleFunc("GET /auth/login/google", google.Authenticate)
 		mux.HandleFunc("GET /auth/callback/google", adapter.Adapt(google.Callback))
