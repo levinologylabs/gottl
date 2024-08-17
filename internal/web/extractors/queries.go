@@ -6,6 +6,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/gorilla/schema"
+	"github.com/jalevin/gottl/internal/core/validate"
 )
 
 var queryDecoder = schema.NewDecoder()
@@ -29,6 +30,11 @@ func Query[T any](r *http.Request) (T, error) {
 		return v, err
 	}
 
-	// return validate.Check(v)
+	valid := validate.Check(v)
+	if valid != nil {
+		var zero T
+		return zero, valid
+	}
+
 	return v, nil
 }

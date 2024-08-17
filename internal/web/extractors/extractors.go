@@ -10,6 +10,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
+	"github.com/jalevin/gottl/internal/core/validate"
 )
 
 // Body decodes the request body into a struct and validates the struct using
@@ -24,13 +25,12 @@ func Body[T any](r *http.Request) (T, error) {
 		return v, err
 	}
 
-	/* err := validate.Check(v) */
-	/* if err != nil { */
-	/* 	return v, err */
-	/* } */
-	/**/
-	/* return v, err */
-	return v, nil
+	err := validate.Check(v)
+	if err != nil {
+		return v, err
+	}
+
+	return v, err
 }
 
 // ID extracts the id field from the path, validates it, and returns it as
@@ -40,8 +40,7 @@ func ID(r *http.Request, key string) (uuid.UUID, error) {
 
 	id, err := uuid.Parse(v)
 	if err != nil {
-		return uuid.Nil, err
-		// return uuid.Nil, validate.NewRouteKeyErrorWithMessage(key, "unable to parse UUID")
+		return uuid.Nil, validate.NewRouteKeyErrorWithMessage(key, "unable to parse UUID")
 	}
 
 	return id, nil
@@ -64,5 +63,3 @@ func BodyWithID[T any](r *http.Request, key string) (uuid.UUID, T, error) {
 
 	return id, body, nil
 }
-
-
