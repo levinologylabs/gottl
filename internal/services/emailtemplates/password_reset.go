@@ -21,7 +21,7 @@ Best regards,
 func PasswordReset(company, baseurl, token string) string {
 	bldr := &strings.Builder{}
 
-	_ = templatePasswordReset.Execute(bldr, map[string]string{
+	_ = templatePasswordReset.Execute(bldr, map[string]any{
 		"CompanyName": company,
 		"Token":       token,
 		"BaseURL":     baseurl,

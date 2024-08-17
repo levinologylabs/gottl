@@ -24,6 +24,7 @@ type PasswordService struct {
 
 func NewPasswordService(cfg Config, l zerolog.Logger, db *db.QueriesExt, queue tasks.Queue) *PasswordService {
 	return &PasswordService{
+		cfg:   cfg,
 		l:     l,
 		db:    db,
 		queue: queue,
