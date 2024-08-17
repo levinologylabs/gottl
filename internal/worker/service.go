@@ -9,6 +9,7 @@ import (
 	"github.com/jalevin/gottl/internal/core/mailer"
 	"github.com/jalevin/gottl/internal/core/tasks"
 	"github.com/jalevin/gottl/internal/data/db"
+	"github.com/rs/zerolog"
 )
 
 var ErrQueueFull = errors.New("queue is full")
@@ -21,6 +22,7 @@ type Config struct {
 var _ tasks.Queue = (*Service)(nil)
 
 type Service struct {
+	l      zerolog.Logger
 	cfg    Config
 	sem    chan struct{}
 	queue  chan tasks.Task
@@ -28,9 +30,10 @@ type Service struct {
 	sender mailer.Sender
 }
 
-func New(config Config, db *db.QueriesExt, sender mailer.Sender) *Service {
+func New(config Config, l zerolog.Logger, db *db.QueriesExt, sender mailer.Sender) *Service {
 	return &Service{
 		cfg:    config,
+		l:      l,
 		sem:    make(chan struct{}, config.Concurrency),
 		queue:  make(chan tasks.Task, config.QueueSize),
 		db:     db,
@@ -45,7 +48,7 @@ func (w *Service) Start(ctx context.Context) {
 	for range w.cfg.Concurrency {
 		go func() {
 			defer wg.Done()
-			worker := newWorker(w.db, w.sender)
+			worker := newWorker(w.l, w.db, w.sender)
 			worker.run(ctx, w.queue)
 		}()
 	}

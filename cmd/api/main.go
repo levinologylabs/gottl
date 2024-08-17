@@ -64,7 +64,7 @@ func run() error {
 
 	var (
 		sender = mailer.NewSMTPSender(cfg.SMTP)
-		wkr    = worker.New(cfg.Worker, queries, sender)
+		wkr    = worker.New(cfg.Worker, logger, queries, sender)
 		svc    = services.NewService(cfg.App, logger, queries, wkr)
 		apisvr = web.New(cfg.Version.Build, cfg.Web, logger, svc)
 	)
