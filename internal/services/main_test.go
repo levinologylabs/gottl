@@ -14,10 +14,12 @@ import (
 )
 
 type ServiceTestCtx struct {
-	db     *db.QueriesExt
-	logger zerolog.Logger
-	user   dtos.UserRegister
-	admin  dtos.UserRegister
+	db      *db.QueriesExt
+	logger  zerolog.Logger
+	user    dtos.UserRegister
+	dbuser  dtos.User
+	admin   dtos.UserRegister
+	dbadmin dtos.User
 }
 
 func SetupServiceTest(t *testing.T) ServiceTestCtx {
@@ -43,16 +45,18 @@ func SetupServiceTest(t *testing.T) ServiceTestCtx {
 		Password: gofakeit.Password(true, true, true, true, true, 14),
 	}
 
-	_, err := svcuser.Register(context.Background(), user)
+	dbuser, err := svcuser.Register(context.Background(), user)
 	require.NoError(t, err)
 
-	_, err = svcadmin.Register(context.Background(), admin)
+  dbadmin, err := svcadmin.Register(context.Background(), admin)
 	require.NoError(t, err)
 
 	return ServiceTestCtx{
-		db:     queries,
-		logger: logger,
-		user:   user,
-		admin:  admin,
+		db:      queries,
+		logger:  logger,
+		user:    user,
+		admin:   admin,
+		dbuser:  dbuser,
+		dbadmin: dbadmin,
 	}
 }
