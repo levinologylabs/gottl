@@ -11,8 +11,8 @@ import (
 var _ Sender = (*SMTPSender)(nil)
 
 type SMTPConfig struct {
-  Host     string `json:"host,omitempty"     conf:"default:localhost"`
-  Port     int    `json:"port,omitempty"     conf:"default:1025"`
+	Host     string `json:"host,omitempty"     conf:"default:localhost"`
+	Port     int    `json:"port,omitempty"     conf:"default:1025"`
 	Username string `json:"username,omitempty"`
 	Password string `json:"password,omitempty"`
 	From     string `json:"from,omitempty"     conf:"Gotll Inc."`

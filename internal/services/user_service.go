@@ -199,9 +199,9 @@ func (s *UserService) ProviderSession(
 			Username: extName,
 			Password: OAuthPasswordPlaceholder,
 		})
-    if err != nil {
-    	return dtos.UserSession{}, err
-    }
+		if err != nil {
+			return dtos.UserSession{}, err
+		}
 
 		_, err = s.db.CreateProvider(ctx, db.CreateProviderParams{
 			UserID:         user.ID,
