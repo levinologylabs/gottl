@@ -9,6 +9,7 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
 	"github.com/jalevin/gottl/internal/data/dtos"
+	"github.com/jalevin/gottl/internal/observability/otel"
 	"github.com/jalevin/gottl/internal/services"
 	"github.com/jalevin/gottl/internal/web/docs"
 	"github.com/jalevin/gottl/internal/web/handlers"
@@ -21,6 +22,7 @@ type Web struct {
 	cfg      Config
 	server   *http.Server
 	logger   zerolog.Logger
+	os       *otel.OtelService
 	services *services.Service
 }
 
@@ -28,12 +30,14 @@ func New(
 	build string,
 	conf Config,
 	logger zerolog.Logger,
+	os *otel.OtelService,
 	services *services.Service,
 ) *Web {
 	w := &Web{
 		build:    build,
 		logger:   logger,
 		cfg:      conf,
+		os:       os,
 		services: services,
 	}
 
@@ -67,10 +71,10 @@ func (web *Web) routes(build string) http.Handler {
 	mux := chi.NewRouter()
 	mux.Use(
 		middleware.Recoverer,
+		mid.Tracing("gottl", mux, web.os),
 		middleware.RealIP,
 		middleware.CleanPath,
 		middleware.StripSlashes,
-		mid.RequestID(),
 		mid.Logger(web.logger),
 		middleware.AllowContentType("application/json", "text/plain", "text/html"),
 	)
@@ -80,7 +84,7 @@ func (web *Web) routes(build string) http.Handler {
 	mux.Use(cors.Handler(cors.Options{
 		AllowedOrigins:   web.cfg.Origins(),
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token", "X-Request-ID"},
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token", "X-Trace-ID"},
 		ExposedHeaders:   []string{"Link"},
 		AllowCredentials: false,
 		MaxAge:           300, // Maximum value not ignored by any of major browsers

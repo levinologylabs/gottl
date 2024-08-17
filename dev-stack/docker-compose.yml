@@ -1,0 +1,105 @@
+---
+services:
+  postgres:
+    container_name: postgres
+    image: postgres:16-alpine
+    ports:
+      - 5432:5432
+    volumes:
+      - postgres:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_DB=postgers
+    labels:
+      logging: "promtail"
+
+  caddy:
+    container_name: caddy
+    image: caddy:latest
+    entrypoint: caddy run --config /root/Caddyfile
+    volumes:
+      - $PWD/dev-stack/caddy/Caddyfile.dev:/root/Caddyfile
+      - $PWD/public:/srv
+      - caddy:/data
+    ports:
+      - "80:80"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    labels:
+      logging: "promtail"
+
+  grafana:
+    container_name: grafana
+    image: grafana/grafana:latest
+    volumes:
+      - $PWD/dev-stack/grafana/grafana.ini:/etc/grafana/grafana.ini
+      - $PWD/dev-stack/grafana/dashboards:/provisioning/dashboards
+      - $PWD/dev-stack/grafana/provisioning:/etc/grafana/provisioning
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+      - tempo
+      - loki
+      - pyroscope
+      - opentelemetry-collector
+
+  prometheus:
+    container_name: prometheus
+    image: prom/prometheus:latest
+    command:
+      - "--web.enable-remote-write-receiver"
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--web.console.libraries=/usr/share/prometheus/console_libraries"
+      - "--web.console.templates=/usr/share/prometheus/consoles"
+
+  tempo:
+    container_name: tempo
+    image: grafana/tempo:latest
+    command:
+      - "-config.file=/etc/tempo.yaml"
+    volumes:
+      - $PWD/dev-stack/tempo/tempo.yaml:/etc/tempo.yaml
+
+  loki:
+    container_name: loki
+    image: grafana/loki:latest
+    volumes:
+      - $PWD/dev-stack/loki/loki.yaml:/etc/loki/loki.yaml
+    ports:
+      - "3100:3100"
+    command:
+      - "-config.file=/etc/loki/loki.yaml"
+
+  pyroscope:
+    container_name: pyroscope
+    image: pyroscope/pyroscope:latest
+    ports:
+      - "4040:4040"
+    command:
+      - "server"
+    volumes:
+      - $PWD/dev-stack/pyroscope/server.yaml:/etc/pyroscope/server.yaml
+
+  opentelemetry-collector:
+    container_name: opentelemetry-collector
+    image: otel/opentelemetry-collector-contrib:latest
+    volumes:
+      - $PWD/dev-stack/opentelemetry-collector/otel-config.yaml:/etc/otel-config.yaml
+    ports:
+      # grpc
+      - "4317:4317"
+      # http
+      - "4318:4318"
+    command:
+      - "--config=/etc/otel-config.yaml"
+    depends_on:
+      - prometheus
+      - tempo
+      - loki
+
+volumes:
+  postgres:
+  caddy:

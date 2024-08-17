@@ -18,6 +18,9 @@ import (
 //	@Router			/api/v1/info [GET]
 func Info(resp dtos.StatusResponse) func(w http.ResponseWriter, r *http.Request) error {
 	return func(w http.ResponseWriter, r *http.Request) error {
+		_, span := tracer.Start(r.Context(), "handlers.info")
+		defer span.End()
+
 		return server.JSON(w, http.StatusOK, resp)
 	}
 }

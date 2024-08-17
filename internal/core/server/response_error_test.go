@@ -20,10 +20,10 @@ func unwrap(err error) error {
 	return asUnwrapable.Unwrap()
 }
 
-// UnsetRequestIDFunc sets the request ID function to return an empty string.
+// UnsetRequestIDFunc sets the trace ID function to return an empty string.
 // This is useful for testing.
 func unsetRequestIDFunc() {
-	requestIDFunc = func(ctx context.Context) string {
+	traceIDFunc = func(ctx context.Context) string {
 		return ""
 	}
 }
@@ -62,22 +62,21 @@ func Test_ErrorBuilder(t *testing.T) {
 			expectJSON: `{"message":"test message","statusCode":500,"data":{"foo":"bar"}}`,
 		},
 		{
-			name:       "with request ID",
+			name:       "with trace ID",
 			builder:    Error(),
 			wantErr:    errors.New("unknown error"),
-			expectJSON: `{"message":"unknown error","statusCode":500,"requestId":"test-request-id"}`,
+			expectJSON: `{"message":"unknown error","statusCode":500,"traceId":"test-trace-id"}`,
 			hook: func(ctx context.Context) context.Context {
 				type key string
-
-				const requestIDKey key = "requestID"
+				const traceIDKey key = "traceID"
 
 				fn := func(ctx context.Context) string {
-					return ctx.Value(requestIDKey).(string)
+					return ctx.Value(traceIDKey).(string)
 				}
 
-				SetRequestIDFunc(fn)
+				SetTraceIDFunc(fn)
 
-				return context.WithValue(ctx, requestIDKey, "test-request-id")
+				return context.WithValue(ctx, traceIDKey, "test-trace-id")
 			},
 		},
 	}

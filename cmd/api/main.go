@@ -4,18 +4,22 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"os/signal"
 	"sync"
+	"time"
 
 	"github.com/jalevin/gottl/internal/core/mailer"
 	"github.com/jalevin/gottl/internal/data/db"
 	"github.com/jalevin/gottl/internal/observability/logtools"
+	"github.com/jalevin/gottl/internal/observability/otel"
 	"github.com/jalevin/gottl/internal/services"
 	"github.com/jalevin/gottl/internal/web"
 	"github.com/jalevin/gottl/internal/web/mid"
 	"github.com/jalevin/gottl/internal/worker"
+	"go.opentelemetry.io/contrib/instrumentation/runtime"
 )
 
 // @title                      Gottl API
@@ -40,13 +44,25 @@ func run() error {
 		os.Exit(1)
 	}
 
-	logger, err := logtools.New(cfg.Logs, mid.RequestIDTraceHook{})
+	logger, err := logtools.New(cfg.Logs, mid.TraceIDTraceHook{})
 	if err != nil {
 		return fmt.Errorf("creating logger: %w", err)
 	}
 
+	err = runtime.Start(runtime.WithMinimumReadMemStatsInterval(time.Second))
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer cancel()
+
+	os := otel.NewOtelService(ctx, logger, cfg.Otel)
+	defer func() {
+		if err := os.Shutdown(ctx); err != nil {
+			logger.Debug().Msgf("Error shutting down otel: %v", err)
+		}
+	}()
 
 	wg := sync.WaitGroup{}
 	wg.Add(1)
@@ -66,7 +82,7 @@ func run() error {
 		sender = mailer.NewSMTPSender(cfg.SMTP)
 		wkr    = worker.New(cfg.Worker, logger, queries, sender)
 		svc    = services.NewService(cfg.App, logger, queries, wkr)
-		apisvr = web.New(cfg.Version.Build, cfg.Web, logger, svc)
+		apisvr = web.New(cfg.Version.Build, cfg.Web, logger, os, svc)
 	)
 
 	go func() {
