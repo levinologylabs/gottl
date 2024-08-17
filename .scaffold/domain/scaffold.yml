@@ -1,0 +1,64 @@
+# yaml-language-server: $schema=https://hay-kot.github.io/scaffold/schema.json
+messages:
+  pre: |
+    # Domain Scaffold
+
+    This scaffold will generate the following files:
+      - Dtos in ./internal/data/dtos
+      - Service in ./internal/services
+      - Controller in ./internal/web/handlers
+
+  post: |
+    # Next Steps
+
+    You've done it! Next steps are to.
+
+    1. Generate your database migration with `task db:migrate -- <migration-name>`
+    2. Implement the Sql Queries and run sqlc
+    3. Implement the service
+
+questions:
+  - name: domain_name
+    prompt:
+      message: Domain Name
+      description: The name of the domain enttiy (e.g. Post) - do not pluralize
+
+computed:
+  domain_var: "{{ .Scaffold.domain_name | toPascalCase }}"
+  domain_kebab: "{{ .Scaffold.domain_name | kebabcase }}"
+
+rewrites:
+  - from: "templates/dtos.go"
+    to: "internal/data/dtos/{{ .Scaffold.domain_name | snakecase }}.go"
+  - from: "templates/service.go"
+    to: "internal/services/{{ .Scaffold.domain_name | snakecase }}_service.go"
+  - from: "templates/handlers.go"
+    to: "internal/web/handlers/{{ .Scaffold.domain_name | snakecase }}_handler.go"
+
+inject:
+  - at: "// $scaffold_inject_service"
+    name: Scaffold Inject Services
+    path: "internal/services/services.go"
+    template: |
+      {{ .Computed.domain_var }}s *{{ .Computed.domain_var }}Service
+
+  - at: "// $scaffold_inject_constructor"
+    name: Scaffold Inject Services Constructor
+    path: "internal/services/services.go"
+    template: |
+      {{ .Computed.domain_var }}s: New{{ .Computed.domain_var }}Service(l, db),
+
+  - at: "// $scaffold_inject_routes"
+    name: Scaffold Inject Routes
+    path: "internal/web/web.go"
+    template: |+
+      {{ $ctrl := .Scaffold.domain_name | camelcase  }}
+
+      {{ $ctrl }}Ctrl := handlers.New{{ .Scaffold.domain_name | toPascalCase }}Controller(web.services.{{ .Scaffold.domain_name | toPascalCase }}s)
+
+      r.HandleFunc("GET /api/v1/{{ .Computed.domain_kebab }}s" , adapter.Adapt({{ $ctrl }}Ctrl.GetAll))
+      r.HandleFunc("POST /api/v1/{{ .Computed.domain_kebab }}s" , adapter.Adapt({{ $ctrl }}Ctrl.Create))
+      r.HandleFunc("GET /api/v1/{{ .Computed.domain_kebab }}s/{id}" , adapter.Adapt({{ $ctrl }}Ctrl.Get))
+      r.HandleFunc("PUT /api/v1/{{ .Computed.domain_kebab }}s/{id}" , adapter.Adapt({{ $ctrl }}Ctrl.Update))
+      r.HandleFunc("DELETE /api/v1/{{ .Computed.domain_kebab }}s/{id}" , adapter.Adapt({{ $ctrl }}Ctrl.Delete))
+

@@ -107,6 +107,8 @@ func (web *Web) routes(build string) http.Handler {
 
 		r.HandleFunc("GET /api/v1/users/self", adapter.Adapt(userctrl.Self))
 		r.HandleFunc("PATCH /api/v1/users/self", adapter.Adapt(userctrl.Update))
+
+		// $scaffold_inject_routes
 	})
 
 	mux.Group(func(r chi.Router) {
