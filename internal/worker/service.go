@@ -6,6 +6,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/jalevin/gottl/internal/core/mailer"
 	"github.com/jalevin/gottl/internal/core/tasks"
 	"github.com/jalevin/gottl/internal/data/db"
 )
@@ -20,18 +21,20 @@ type Config struct {
 var _ tasks.Queue = (*Service)(nil)
 
 type Service struct {
-	cfg   Config
-	sem   chan struct{}
-	queue chan tasks.Task
-	db    *db.QueriesExt
+	cfg    Config
+	sem    chan struct{}
+	queue  chan tasks.Task
+	db     *db.QueriesExt
+	sender mailer.Sender
 }
 
-func New(config Config, db *db.QueriesExt) *Service {
+func New(config Config, db *db.QueriesExt, sender mailer.Sender) *Service {
 	return &Service{
-		cfg:   config,
-		sem:   make(chan struct{}, config.Concurrency),
-		queue: make(chan tasks.Task, config.QueueSize),
-		db:    db,
+		cfg:    config,
+		sem:    make(chan struct{}, config.Concurrency),
+		queue:  make(chan tasks.Task, config.QueueSize),
+		db:     db,
+		sender: sender,
 	}
 }
 
@@ -42,7 +45,7 @@ func (w *Service) Start(ctx context.Context) {
 	for range w.cfg.Concurrency {
 		go func() {
 			defer wg.Done()
-			worker := newWorker(w.db)
+			worker := newWorker(w.db, w.sender)
 			worker.run(ctx, w.queue)
 		}()
 	}

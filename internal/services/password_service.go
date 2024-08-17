@@ -7,6 +7,7 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jalevin/gottl/internal/core/hasher"
+	"github.com/jalevin/gottl/internal/core/mailer"
 	"github.com/jalevin/gottl/internal/core/tasks"
 	"github.com/jalevin/gottl/internal/data/db"
 	"github.com/jalevin/gottl/internal/data/dtos"
@@ -49,14 +50,12 @@ func (s *PasswordService) RequestReset(ctx context.Context, data dtos.PasswordRe
 		return "", err
 	}
 
-	err = s.queue.Enqueue(tasks.Task{
-		ID: tasks.TaskIDSendEmail,
-		Payload: tasks.TaskDataSendEmail{
-			Email:   data.Email,
-			Subject: "Password Reset",
-			Body:    emailtemplates.PasswordReset(s.cfg.CompanyName, s.cfg.WebURL, token.Raw),
-		},
-	})
+	err = s.queue.Enqueue(tasks.NewEmailTask(mailer.Message{
+		To:      usr.Email,
+		From:    s.cfg.CompanyName,
+		Subject: "Password Reset",
+		Body:    emailtemplates.PasswordReset(s.cfg.CompanyName, s.cfg.WebURL, token.Raw),
+	}))
 	if err != nil {
 		return "", err
 	}
@@ -72,23 +71,28 @@ func (s *PasswordService) Reset(ctx context.Context, data dtos.PasswordReset) er
 			Now:    time.Now(),
 		})
 		if err != nil {
+			s.l.Error().Err(err).Msg("failed to get user action token")
 			return err
 		}
 
 		pwHash, err := hasher.HashPassword(data.Password)
 		if err != nil {
+			s.l.Error().Err(err).Msg("failed to hash password")
 			return err
 		}
 
 		_, err = s.db.UserUpdate(ctx, db.UserUpdateParams{
+			ID:           v.UserID,
 			PasswordHash: &pwHash,
 		})
 		if err != nil {
+			s.l.Error().Err(err).Msg("failed to update user password")
 			return err
 		}
 
 		err = s.db.UserActionTokenDelete(ctx, v.ID)
 		if err != nil {
+			s.l.Error().Err(err).Msg("failed to delete user action token")
 			return err
 		}
 

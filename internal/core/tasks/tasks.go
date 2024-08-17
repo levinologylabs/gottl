@@ -1,18 +1,14 @@
 // Package tasks provides the core contracts for background job definitions.
 package tasks
 
+import "github.com/jalevin/gottl/internal/core/mailer"
+
 type TaskID string
 
 var (
 	TaskIDSendEmail         TaskID = "send_email"
 	TaskIDDeleteExpiredData TaskID = "delete_expired_data"
 )
-
-type TaskDataSendEmail struct {
-	Email   string `json:"email"`
-	Subject string `json:"subject"`
-	Body    string `json:"body"`
-}
 
 type Task struct {
 	ID      TaskID
@@ -21,4 +17,18 @@ type Task struct {
 
 type Queue interface {
 	Enqueue(task Task) error
+}
+
+func NewEmailTask(message mailer.Message) Task {
+	return Task{
+		ID:      TaskIDSendEmail,
+		Payload: message,
+	}
+}
+
+func NewDeleteExpiredDataTask() Task {
+	return Task{
+		ID:      TaskIDDeleteExpiredData,
+		Payload: nil,
+	}
 }

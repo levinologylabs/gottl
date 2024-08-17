@@ -9,6 +9,7 @@ import (
 	"os/signal"
 	"sync"
 
+	"github.com/jalevin/gottl/internal/core/mailer"
 	"github.com/jalevin/gottl/internal/data/db"
 	"github.com/jalevin/gottl/internal/observability/logtools"
 	"github.com/jalevin/gottl/internal/services"
@@ -62,7 +63,8 @@ func run() error {
 	}()
 
 	var (
-		wkr    = worker.New(cfg.Worker, queries)
+		sender = mailer.NewSMTPSender(cfg.SMTP)
+		wkr    = worker.New(cfg.Worker, queries, sender)
 		svc    = services.NewService(cfg.App, logger, queries, wkr)
 		apisvr = web.New(cfg.Version.Build, cfg.Web, logger, svc)
 	)

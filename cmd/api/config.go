@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/ardanlabs/conf/v3"
+	"github.com/jalevin/gottl/internal/core/mailer"
 	"github.com/jalevin/gottl/internal/data/db"
 	"github.com/jalevin/gottl/internal/observability/logtools"
 	"github.com/jalevin/gottl/internal/services"
@@ -20,6 +21,7 @@ type Config struct {
 	Postgres db.Config
 	Worker   worker.Config
 	App      services.Config
+	SMTP     mailer.SMTPConfig
 }
 
 var (

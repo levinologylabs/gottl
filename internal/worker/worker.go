@@ -4,24 +4,26 @@ package worker
 import (
 	"context"
 
+	"github.com/jalevin/gottl/internal/core/mailer"
 	"github.com/jalevin/gottl/internal/core/tasks"
 	"github.com/jalevin/gottl/internal/data/db"
 )
 
 type worker struct {
-	db *db.QueriesExt
+	sender mailer.Sender
+	db     *db.QueriesExt
 }
 
-func newWorker(services *db.QueriesExt) *worker {
+func newWorker(services *db.QueriesExt, sender mailer.Sender) *worker {
 	return &worker{
-		db: services,
+		db:     services,
+		sender: sender,
 	}
 }
 
 func (w *worker) run(ctx context.Context, ch <-chan tasks.Task) {
 	defer func() {
 		if r := recover(); r != nil {
-			// log the error
 			go w.run(ctx, ch)
 		}
 	}()
@@ -40,7 +42,17 @@ func (w *worker) run(ctx context.Context, ch <-chan tasks.Task) {
 }
 
 func (w *worker) sendEmail(task tasks.Task) {
-	panic("not implemented")
+	data, ok := task.Payload.(mailer.Message)
+	if !ok {
+		println("Task integrity error")
+		panic("task integrity error")
+	}
+
+	err := w.sender.Send(data)
+	if err != nil {
+		println(err.Error())
+		panic(err)
+	}
 }
 
 func (w *worker) deleteExpiredData(task tasks.Task) {
