@@ -14,6 +14,7 @@ import (
 	sdkmetric "go.opentelemetry.io/otel/sdk/metric"
 	sdkresource "go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
+	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
 	"go.opentelemetry.io/otel/trace/noop"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -125,7 +126,7 @@ func (os *OtelService) initResource(ctx context.Context) *sdkresource.Resource {
 		extraResources, _ := sdkresource.New(
 			ctx,
 			// temp, get this from the config
-			//sdkresource.WithAttributes(semconv.ServiceNameKey.String(os.cfg.ServiceName)),
+			sdkresource.WithAttributes(semconv.ServiceNameKey.String(os.cfg.ServiceName)),
 			sdkresource.WithOS(),
 			sdkresource.WithProcess(),
 			sdkresource.WithContainer(),
