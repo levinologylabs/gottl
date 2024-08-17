@@ -21,33 +21,33 @@ receivers:
           scrape_interval: 10s
           static_configs:
             - targets: ["grafana:3000"]
-  tcplog:
-    listen_address: 0.0.0.0:54526
-    operators:
-      - type: regex_parser
-        regex: (?P<timestamp_field>\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z)
-      - type: add
-        field: body
-        value: EXPR(replace(body, attributes.timestamp_field, 'Oct 11 22:14:15'))
-      - type: syslog_parser
-        protocol: rfc3164
-        location: UTC
-      - type: time_parser
-        parse_from: attributes.timestamp_field
-        layout: "%Y-%m-%dT%H:%M:%SZ"
-        layout_type: strptime
-      - type: move
-        if: "attributes.message != nil"
-        from: attributes.message
-        to: body
-      - type: remove
-        field: attributes.timestamp_field
-      - type: remove
-        field: attributes.proc_id
-      - type: remove
-        field: attributes.priority
-      - type: remove
-        field: attributes.facility
+  #tcplog:
+  #  listen_address: 0.0.0.0:54526
+  #  operators:
+  #    - type: regex_parser
+  #      regex: (?P<timestamp_field>\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z)
+  #    - type: add
+  #      field: body
+  #      value: EXPR(replace(body, attributes.timestamp_field, 'Oct 11 22:14:15'))
+  #    - type: syslog_parser
+  #      protocol: rfc3164
+  #      location: UTC
+  #    - type: time_parser
+  #      parse_from: attributes.timestamp_field
+  #      layout: "%Y-%m-%dT%H:%M:%SZ"
+  #      layout_type: strptime
+  #    - type: move
+  #      if: "attributes.message != nil"
+  #      from: attributes.message
+  #      to: body
+  #    - type: remove
+  #      field: attributes.timestamp_field
+  #    - type: remove
+  #      field: attributes.proc_id
+  #    - type: remove
+  #      field: attributes.priority
+  #    - type: remove
+  #      field: attributes.facility
 
 processors:
   # memory_limiter:
@@ -95,10 +95,10 @@ service:
       receivers: [otlp]
       processors: [batch]
       exporters: [otlp]
-    logs:
-      receivers: [tcplog]
-      processors: [attributes, resource, batch]
-      exporters: [loki]
+    #logs:
+    #  receivers: [tcplog]
+    #  processors: [attributes, resource, batch]
+    #  exporters: [loki]
   extensions: [health_check]
   telemetry:
     metrics:
