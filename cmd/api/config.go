@@ -6,10 +6,13 @@ import (
 	"os"
 
 	"github.com/ardanlabs/conf/v3"
+	"github.com/jalevin/gottl/internal/core/mailer"
 	"github.com/jalevin/gottl/internal/data/db"
 	"github.com/jalevin/gottl/internal/observability/logtools"
 	"github.com/jalevin/gottl/internal/observability/otel"
+	"github.com/jalevin/gottl/internal/services"
 	"github.com/jalevin/gottl/internal/web"
+	"github.com/jalevin/gottl/internal/worker"
 )
 
 type Config struct {
@@ -18,6 +21,9 @@ type Config struct {
 	Logs     logtools.Config
 	Postgres db.Config
 	Otel     otel.Config
+	Worker   worker.Config
+	App      services.Config
+	SMTP     mailer.SMTPConfig
 }
 
 var (

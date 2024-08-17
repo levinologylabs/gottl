@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/jalevin/gottl/internal/core/hasher"
@@ -49,8 +50,8 @@ func (s *UserService) Register(ctx context.Context, data dtos.UserRegister) (dto
 // If the credentials are invalid, an error is returned. This function uses a constant
 // time comparison to prevent timing attacks. When no use is found by the provided email
 // address, the same error is returned to prevent user enumeration.
-func (s *UserService) Authenticate(ctx context.Context, data dtos.UserAuthenticate) (dtos.User, error) {
-	dbsuer, err := s.db.UserByEmail(ctx, data.Email)
+func (s *UserService) Authenticate(ctx context.Context, data dtos.UserAuthenticate) (dtos.UserSession, error) {
+	dbuser, err := s.db.UserByEmail(ctx, data.Email)
 	if err != nil {
 		// This is to prevent timing attacks ensuring that when no user is found we
 		// still perform the same amount of work as when a user is found.
@@ -60,15 +61,46 @@ func (s *UserService) Authenticate(ctx context.Context, data dtos.UserAuthentica
 		hasher.CheckPasswordHash(data.Password, savedHash)
 
 		s.l.Error().Err(err).Str("email", data.Email).Msg("failed to get user by email")
-		return dtos.User{}, ErrInvalidLogin
+		return dtos.UserSession{}, ErrInvalidLogin
 	}
 
-	if !hasher.CheckPasswordHash(data.Password, dbsuer.PasswordHash) {
+	if !hasher.CheckPasswordHash(data.Password, dbuser.PasswordHash) {
 		s.l.Error().Err(err).Str("email", data.Email).Msg("password verification failed")
-		return dtos.User{}, ErrInvalidLogin
+		return dtos.UserSession{}, ErrInvalidLogin
 	}
 
-	return s.mapper.Map(dbsuer), nil
+	return s.createSession(ctx, s.mapper.Map(dbuser))
+}
+
+// SessionVerify validates a user's session token and returns the user if the token is valid
+// and has not expired.
+func (s *UserService) SessionVerify(ctx context.Context, token string) (dtos.User, error) {
+	user, err := s.db.UserBySession(ctx, hasher.HashToken(token))
+	if err != nil {
+		return dtos.User{}, err
+	}
+
+	return s.mapper.Map(user), nil
+}
+
+func (s *UserService) createSession(ctx context.Context, user dtos.User) (dtos.UserSession, error) {
+	expiresAt := time.Now().Add(time.Hour * 24 * 31)
+
+	token := hasher.NewToken()
+
+	err := s.db.SessionCreate(ctx, db.SessionCreateParams{
+		UserID:    user.ID,
+		Token:     token.Hash,
+		ExpiresAt: expiresAt,
+	})
+	if err != nil {
+		return dtos.UserSession{}, err
+	}
+
+	return dtos.UserSession{
+		Token:     token.Raw,
+		ExpiresAt: expiresAt,
+	}, nil
 }
 
 // GetByID returns a single user by id from the database.

@@ -18,8 +18,26 @@ type User struct {
 	Username              string
 	Email                 string
 	PasswordHash          string
+	IsAdmin               bool
 	StripeCustomerID      *string
 	StripeSubscriptionID  *string
 	SubscriptionStartDate pgtype.Timestamp
 	SubscriptionEndedDate pgtype.Timestamp
+}
+
+type UserActionToken struct {
+	ID        uuid.UUID
+	CreatedAt time.Time
+	ExpiresAt time.Time
+	UserID    uuid.UUID
+	Token     []byte
+	Action    string
+}
+
+type UserSession struct {
+	ID        uuid.UUID
+	CreatedAt time.Time
+	ExpiresAt time.Time
+	UserID    uuid.UUID
+	Token     []byte
 }

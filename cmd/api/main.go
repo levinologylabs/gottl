@@ -11,11 +11,14 @@ import (
 	"sync"
 	"time"
 
+	"github.com/jalevin/gottl/internal/core/mailer"
 	"github.com/jalevin/gottl/internal/data/db"
 	"github.com/jalevin/gottl/internal/observability/logtools"
 	"github.com/jalevin/gottl/internal/observability/otel"
+	"github.com/jalevin/gottl/internal/services"
 	"github.com/jalevin/gottl/internal/web"
 	"github.com/jalevin/gottl/internal/web/mid"
+	"github.com/jalevin/gottl/internal/worker"
 	"go.opentelemetry.io/contrib/instrumentation/runtime"
 )
 
@@ -77,6 +80,13 @@ func run() error {
 		}
 	}()
 
+	var (
+		sender = mailer.NewSMTPSender(cfg.SMTP)
+		wkr    = worker.New(cfg.Worker, logger, queries, sender)
+		svc    = services.NewService(cfg.App, logger, queries, wkr)
+		apisvr = web.New(cfg.Version.Build, cfg.Web, logger, svc)
+	)
+
 	go func() {
 		defer wg.Done()
 		err := apisvr.Start(ctx)
@@ -84,6 +94,8 @@ func run() error {
 			logger.Error().Err(err).Msg("server error")
 		}
 	}()
+
+	go wkr.Start(ctx)
 
 	wg.Wait()
 

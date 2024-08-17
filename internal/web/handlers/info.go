@@ -15,7 +15,7 @@ import (
 //	@Accept			json
 //	@Produce		json
 //	@Success		200	{object}	dtos.StatusResponse
-//	@Router			/api/v1/status [GET]
+//	@Router			/api/v1/info [GET]
 func Info(resp dtos.StatusResponse) func(w http.ResponseWriter, r *http.Request) error {
 	return func(w http.ResponseWriter, r *http.Request) error {
 		_, span := tracer.Start(r.Context(), "handlers.info")

@@ -28,20 +28,24 @@ type tLogWriter struct {
 
 func (w tLogWriter) Write(p []byte) (n int, err error) {
 	// trim duplicate newline
+	removed := 0
 	if len(p) > 0 && p[len(p)-1] == '\n' {
 		p = p[:len(p)-1]
+		removed = 1
 	}
 
 	w.t.Log(string(p))
-	return len(p), nil
+	return len(p) + removed, nil
 }
 
-// TestLogger returns a new logger child that is configured to write to the test's log.
-// This is useful for writing logs to the associated test's output.
-func TestLogger(t *testing.T) zerolog.Logger {
+// Logger returns a new logger that is configured to write to the test's log.
+func Logger(t *testing.T) zerolog.Logger {
+	t.Helper()
+
 	logger := zerolog.New(zerolog.ConsoleWriter{
 		Out: tLogWriter{t: t},
 	}).With().
+		Timestamp().
 		Str("test", t.Name()).
 		Logger()
 

@@ -10,6 +10,7 @@ import (
 	"github.com/go-chi/cors"
 	"github.com/jalevin/gottl/internal/data/dtos"
 	"github.com/jalevin/gottl/internal/observability/otel"
+	"github.com/jalevin/gottl/internal/services"
 	"github.com/jalevin/gottl/internal/web/docs"
 	"github.com/jalevin/gottl/internal/web/handlers"
 	"github.com/jalevin/gottl/internal/web/mid"
@@ -17,11 +18,12 @@ import (
 )
 
 type Web struct {
-	build  string
-	cfg    Config
-	server *http.Server
-	logger zerolog.Logger
-	os     *otel.OtelService
+	build    string
+	cfg      Config
+	server   *http.Server
+	logger   zerolog.Logger
+	os       *otel.OtelService
+	services *services.Service
 }
 
 func New(
@@ -29,12 +31,14 @@ func New(
 	conf Config,
 	logger zerolog.Logger,
 	os *otel.OtelService,
+	services *services.Service,
 ) *Web {
 	w := &Web{
-		build:  build,
-		logger: logger,
-		cfg:    conf,
-		os:     os,
+		build:    build,
+		logger:   logger,
+		cfg:      conf,
+		os:       os,
+		services: services,
 	}
 
 	mux := w.routes(build)
@@ -94,6 +98,31 @@ func (web *Web) routes(build string) http.Handler {
 
 	mux.HandleFunc("GET /docs/swagger.json", adapter.Adapt(docs.SwaggerJSON))
 	mux.HandleFunc("GET /api/v1/info", adapter.Adapt(handlers.Info(dtos.StatusResponse{Build: build})))
+
+	userctrl := handlers.NewAuthController(web.services.Users, web.services.Passwords)
+
+	mux.HandleFunc("POST /api/v1/users", adapter.Adapt(userctrl.Register))
+	mux.HandleFunc("POST /api/v1/users/login", adapter.Adapt(userctrl.Authenticate))
+	mux.HandleFunc("POST /api/v1/users/reset-password-request", adapter.Adapt(userctrl.ResetPasswordRequest))
+	mux.HandleFunc("POST /api/v1/users/reset-password", adapter.Adapt(userctrl.ResetPassword))
+
+	mux.Group(func(r chi.Router) {
+		r.Use(mid.Authenticate(web.services.Users))
+
+		r.HandleFunc("GET /api/v1/users/self", adapter.Adapt(userctrl.Self))
+		r.HandleFunc("PATCH /api/v1/users/self", adapter.Adapt(userctrl.Update))
+	})
+
+	mux.Group(func(r chi.Router) {
+		r.Use(
+			mid.Authenticate(web.services.Users),
+			mid.AuthorizeAdmin(),
+		)
+
+		admin := handlers.NewAdminController(web.services.Admin)
+
+		r.HandleFunc("GET /api/v1/admin/users", adapter.Adapt(admin.GetAllUsers))
+	})
 
 	return mux
 }

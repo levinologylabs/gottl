@@ -14,6 +14,7 @@ tasks:
     cmds:
       - go install github.com/swaggo/swag/cmd/swag@latest
       - go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
+      - brew install golangci-lint
     silent: false
   run:
     desc: Runs the main application and supports passing CLI args
@@ -94,4 +95,4 @@ tasks:
       - ./internal/web/docs/swagger.json
     cmds:
       - swag fmt --dir=./internal
-      - swag init --outputTypes=json -g ./cmd/api/main.go --output=./internal/web/docs/
+      - swag init --outputTypes=json -g ./cmd/api/main.go --output=./internal/web/docs/ -dir=./,./internal/data/dtos

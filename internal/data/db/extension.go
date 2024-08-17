@@ -24,14 +24,14 @@ func (qe *QueriesExt) Close(ctx context.Context) error {
 }
 
 // WithTx runs the given function in a transaction.
-func (qe *QueriesExt) WithTx(ctx context.Context, fn func(*Queries) error) error {
+func (qe *QueriesExt) WithTx(ctx context.Context, fn func(*QueriesExt) error) error {
 	tx, err := qe.conn.BeginTx(ctx, pgx.TxOptions{})
 	if err != nil {
 		return err
 	}
 
-	q := qe.Queries.WithTx(tx)
-	if err := fn(q); err != nil {
+	qext := &QueriesExt{qe.Queries.WithTx(tx), qe.conn}
+	if err := fn(qext); err != nil {
 		_ = tx.Rollback(ctx)
 		return err
 	}
