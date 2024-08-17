@@ -64,8 +64,6 @@ func run() error {
 		}
 	}()
 
-	apisvr := web.New(cfg.Version.Build, cfg.Web, logger, os)
-
 	wg := sync.WaitGroup{}
 	wg.Add(1)
 
@@ -84,7 +82,7 @@ func run() error {
 		sender = mailer.NewSMTPSender(cfg.SMTP)
 		wkr    = worker.New(cfg.Worker, logger, queries, sender)
 		svc    = services.NewService(cfg.App, logger, queries, wkr)
-		apisvr = web.New(cfg.Version.Build, cfg.Web, logger, svc)
+		apisvr = web.New(cfg.Version.Build, cfg.Web, logger, os, svc)
 	)
 
 	go func() {

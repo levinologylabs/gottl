@@ -120,12 +120,12 @@ type ErrorResp struct {
 // a type of server.ResponseError that can be if you are using an error middleware
 // that logs errors.
 func (b *ErrorBuilder) Write(ctx context.Context, w http.ResponseWriter) error {
-	traceId := traceIDFunc(ctx)
+	traceID := traceIDFunc(ctx)
 
 	body := ErrorResp{
 		Message:    b.responseMsg(),
 		StatusCode: b.status,
-		TraceID:    traceId,
+		TraceID:    traceID,
 		Data:       b.data,
 	}
 
