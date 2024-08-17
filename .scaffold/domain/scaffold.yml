@@ -29,8 +29,8 @@ computed:
 
 rewrites:
   - from: "templates/dtos.go"
-    to: "./internal/data/dtos/{{ .Scaffold.domain_name | snakecase }}.go"
+    to: "internal/data/dtos/{{ .Scaffold.domain_name | snakecase }}.go"
   - from: "templates/service.go"
-    to: "./internal/services/{{ .Scaffold.domain_name | snakecase }}_service.go"
+    to: "internal/services/{{ .Scaffold.domain_name | snakecase }}_service.go"
   - from: "templates/controller.go"
-    to: "./internal/web/handlers/{{ .Scaffold.domain_name | snakecase }}_handler.go"
+    to: "internal/web/handlers/{{ .Scaffold.domain_name | snakecase }}_handler.go"
