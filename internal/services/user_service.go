@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/jalevin/gottl/internal/core/hasher"
 	"github.com/jalevin/gottl/internal/data/db"
 	"github.com/jalevin/gottl/internal/data/dtos"
@@ -164,6 +165,8 @@ func (s *UserService) UpdateSubscription(ctx context.Context, id uuid.UUID, data
 	return s.mapper.Map(v), nil
 }
 
+const OAuthPasswordPlaceholder = "ProviderOnlyUser"
+
 // ProviderSession creates a new session for a user that has authenticated with a third-party.
 func (s *UserService) ProviderSession(
 	ctx context.Context,
@@ -172,5 +175,44 @@ func (s *UserService) ProviderSession(
 	extEmail string,
 	extName string,
 ) (dtos.UserSession, error) {
-	panic("implement me")
+	// try get user by extID
+	user, err := s.db.UserByProvider(ctx, db.UserByProviderParams{
+		ProviderName:   providerName,
+		ProviderUserID: extID,
+	})
+	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
+		return dtos.UserSession{}, err
+	}
+
+	if user.ID == uuid.Nil {
+		// try bind by email
+		user, err = s.db.UserByEmail(ctx, extEmail)
+		if err != nil && !errors.Is(err, pgx.ErrNoRows) {
+			return dtos.UserSession{}, err
+		}
+	}
+
+	if user.ID == uuid.Nil {
+		// create new user
+		user, err := s.Register(ctx, dtos.UserRegister{
+			Email:    extEmail,
+			Username: extName,
+			Password: OAuthPasswordPlaceholder,
+		})
+    if err != nil {
+    	return dtos.UserSession{}, err
+    }
+
+		_, err = s.db.CreateProvider(ctx, db.CreateProviderParams{
+			UserID:         user.ID,
+			ProviderName:   providerName,
+			ProviderUserID: extID,
+			Metadata:       nil,
+		})
+		if err != nil {
+			return dtos.UserSession{}, err
+		}
+	}
+
+	return s.createSession(ctx, s.mapper.Map(user))
 }
