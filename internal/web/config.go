@@ -23,7 +23,7 @@ type Config struct {
 }
 
 type Auth struct {
-	Local  bool `conf:"default:false"`
+	Local  bool `conf:"default:true"`
 	Google providers.GoogleConfig
 }
 
