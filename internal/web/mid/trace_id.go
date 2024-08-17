@@ -8,11 +8,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/jalevin/gottl/internal/core/server"
 	"github.com/rs/zerolog"
-	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/trace"
 )
-
-var tracer = otel.Tracer("gottl")
 
 // TraceIDTraceHook is a zerolog hook that adds the trace ID to the log
 // output.
@@ -20,7 +17,7 @@ type TraceIDTraceHook struct{}
 
 func (h TraceIDTraceHook) Run(e *zerolog.Event, level zerolog.Level, msg string) {
 	ctx := e.GetCtx()
-	_, traceID := GetTraceIDFromContext(ctx)
+	traceID := GetTraceIDFromContext(ctx)
 	if traceID == "" {
 		return
 	}
@@ -32,18 +29,12 @@ type reqCtxKey string
 
 const reqCtxKeyType reqCtxKey = "trace_id"
 
-func GetTraceIDFromContext(ctx context.Context) (context.Context, string) {
+func GetTraceIDFromContext(ctx context.Context) string {
 	spanCtx := trace.SpanContextFromContext(ctx)
 	if spanCtx.HasTraceID() {
-		traceID := spanCtx.TraceID()
-		return ctx, traceID.String()
+		return spanCtx.TraceID().String()
 	}
-
-	ctx, span := tracer.Start(ctx, "Root")
-	spanCtx = trace.SpanContextFromContext(ctx)
-	defer span.End()
-
-	return ctx, spanCtx.TraceID().String()
+	return ""
 }
 
 func TraceID() func(http.Handler) http.Handler {

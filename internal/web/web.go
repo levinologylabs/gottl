@@ -12,7 +12,6 @@ import (
 	"github.com/jalevin/gottl/internal/web/docs"
 	"github.com/jalevin/gottl/internal/web/handlers"
 	"github.com/jalevin/gottl/internal/web/mid"
-	"github.com/riandyrn/otelchi"
 	"github.com/rs/zerolog"
 )
 
@@ -63,12 +62,11 @@ func (web *Web) Start(ctx context.Context) error {
 func (web *Web) routes(build string) http.Handler {
 	mux := chi.NewRouter()
 	mux.Use(
+		mid.Tracing("gottl", mux),
 		middleware.Recoverer,
 		middleware.RealIP,
 		middleware.CleanPath,
 		middleware.StripSlashes,
-		mid.TraceID(),
-		otelchi.Middleware("gottl", otelchi.WithChiRoutes(mux)),
 		mid.Logger(web.logger),
 		middleware.AllowContentType("application/json", "text/plain", "text/html"),
 	)

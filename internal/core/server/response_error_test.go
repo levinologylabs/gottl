@@ -5,9 +5,6 @@ import (
 	"errors"
 	"net/http/httptest"
 	"testing"
-
-	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/trace"
 )
 
 type unwrapable interface {
@@ -23,11 +20,11 @@ func unwrap(err error) error {
 	return asUnwrapable.Unwrap()
 }
 
-// UnsetTraceIDFunc sets the trace ID function to return an empty string.
+// UnsetRequestIDFunc sets the trace ID function to return an empty string.
 // This is useful for testing.
-func unsetTraceIDFunc() {
-	traceIDFunc = func(ctx context.Context) (context.Context, string) {
-		return context.Background(), ""
+func unsetRequestIDFunc() {
+	traceIDFunc = func(ctx context.Context) string {
+		return ""
 	}
 }
 
@@ -70,24 +67,23 @@ func Test_ErrorBuilder(t *testing.T) {
 			wantErr:    errors.New("unknown error"),
 			expectJSON: `{"message":"unknown error","statusCode":500,"traceId":"test-trace-id"}`,
 			hook: func(ctx context.Context) context.Context {
-				tracer := otel.Tracer("gottl-test")
-				fn := func(ctx context.Context) (context.Context, string) {
-					ctx, span := tracer.Start(ctx, "test-span")
-					defer span.End()
-					spanctx := trace.SpanContextFromContext(ctx)
-					return ctx, spanctx.TraceID().String()
+				type key string
+				const traceIDKey key = "traceID"
+
+				fn := func(ctx context.Context) string {
+					return ctx.Value(traceIDKey).(string)
 				}
 
 				SetTraceIDFunc(fn)
 
-				return ctx
+				return context.WithValue(ctx, traceIDKey, "test-trace-id")
 			},
 		},
 	}
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			defer unsetTraceIDFunc()
+			defer unsetRequestIDFunc()
 			bg := context.Background()
 			if c.hook != nil {
 				bg = c.hook(bg)
