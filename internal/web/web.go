@@ -14,6 +14,7 @@ import (
 	"github.com/jalevin/gottl/internal/web/docs"
 	"github.com/jalevin/gottl/internal/web/handlers"
 	"github.com/jalevin/gottl/internal/web/mid"
+	oauthhandler "github.com/jalevin/gottl/internal/web/oauth/handlers"
 	"github.com/rs/zerolog"
 )
 
@@ -109,6 +110,14 @@ func (web *Web) routes(build string) http.Handler {
 	mux.HandleFunc("POST /api/v1/users/login", adapter.Adapt(userctrl.Authenticate))
 	mux.HandleFunc("POST /api/v1/users/reset-password-request", adapter.Adapt(userctrl.ResetPasswordRequest))
 	mux.HandleFunc("POST /api/v1/users/reset-password", adapter.Adapt(userctrl.ResetPassword))
+
+	if web.cfg.Google.ClientID != "" {
+		web.logger.Info().Msg("google oauth enabled")
+		google := oauthhandler.NewGoogleAuthController(web.logger, web.cfg.Google, web.services.Users)
+
+		mux.HandleFunc("GET /auth/login/google", google.Authenticate)
+		mux.HandleFunc("GET /auth/callback/google", adapter.Adapt(google.Callback))
+	}
 
 	mux.Group(func(r chi.Router) {
 		r.Use(mid.Authenticate(web.s.Users))

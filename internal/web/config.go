@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/jalevin/gottl/internal/observability/otel"
+	"github.com/jalevin/gottl/internal/web/oauth/providers"
 )
 
 type Config struct {
@@ -17,6 +18,7 @@ type Config struct {
 	AllowedOrigins string        `conf:"default:http://*,http://*"`
 	EnableProfiler bool          `conf:"default:false"`
 	Otel           otel.Config
+	Google         providers.GoogleConfig
 }
 
 func (cfg Config) Origins() []string {

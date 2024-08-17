@@ -163,3 +163,14 @@ func (s *UserService) UpdateSubscription(ctx context.Context, id uuid.UUID, data
 
 	return s.mapper.Map(v), nil
 }
+
+// ProviderSession creates a new session for a user that has authenticated with a third-party.
+func (s *UserService) ProviderSession(
+	ctx context.Context,
+	providerName string,
+	extID string,
+	extEmail string,
+	extName string,
+) (dtos.UserSession, error) {
+	panic("implement me")
+}
