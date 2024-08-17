@@ -48,7 +48,7 @@ func SetupServiceTest(t *testing.T) ServiceTestCtx {
 	dbuser, err := svcuser.Register(context.Background(), user)
 	require.NoError(t, err)
 
-  dbadmin, err := svcadmin.Register(context.Background(), admin)
+	dbadmin, err := svcadmin.Register(context.Background(), admin)
 	require.NoError(t, err)
 
 	return ServiceTestCtx{
