@@ -1,0 +1,35 @@
+logging {
+  level  = "debug"
+  format = "logfmt"
+}
+
+// app config
+local.file_match "gottl" {
+     path_targets = [{"__path__" = "/logs/gottl.dev.log"}]
+     sync_period = "1s"
+ }
+
+loki.process "gottl" {
+  stage.static_labels {
+    values = {
+      app = "gottl",
+    }
+  }
+  forward_to = [loki.write.grafana_loki.receiver]
+}
+
+loki.source.file "log_scrape" {
+  targets    = local.file_match.gottl.targets
+  forward_to = [loki.process.gottl.receiver]
+  tail_from_end = true
+}
+
+loki.write "grafana_loki" {
+  endpoint {
+    url = "http://loki:3100/loki/api/v1/push"
+  }
+}
+
+
+// container config
+

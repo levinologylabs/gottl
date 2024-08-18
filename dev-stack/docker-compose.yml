@@ -12,7 +12,7 @@ services:
       - POSTGRES_USER=postgres
       - POSTGRES_DB=postgers
     labels:
-      logging: "promtail"
+      logging: "alloy"
 
   caddy:
     container_name: caddy
@@ -27,7 +27,7 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     labels:
-      logging: "promtail"
+      logging: "alloy"
 
   grafana:
     container_name: grafana
@@ -99,6 +99,20 @@ services:
       - prometheus
       - tempo
       - loki
+
+  alloy:
+    container_name: alloy
+    image: grafana/alloy:latest
+    ports:
+      - "12345:12345"
+    volumes:
+      - $PWD/dev-stack/alloy/config.alloy:/etc/alloy/config.alloy
+      - $PWD/logs/gottl.dev.log:/logs/gottl.dev.log
+    command: <|
+      run
+      --server.http.listen-addr=0.0.0.0:12345
+      --storage.path=/var/lib/alloy/data
+      /etc/alloy/config.alloy"
 
 volumes:
   postgres:
