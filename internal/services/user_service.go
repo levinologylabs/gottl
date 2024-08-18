@@ -175,8 +175,12 @@ func (s *UserService) ProviderSession(
 	extEmail string,
 	extName string,
 ) (dtos.UserSession, error) {
+	var dbuser db.User
+	var err error
+	var user dtos.User
+
 	// try get user by extID
-	user, err := s.db.UserByProvider(ctx, db.UserByProviderParams{
+	dbuser, err = s.db.UserByProvider(ctx, db.UserByProviderParams{
 		ProviderName:   providerName,
 		ProviderUserID: extID,
 	})
@@ -184,22 +188,23 @@ func (s *UserService) ProviderSession(
 		return dtos.UserSession{}, err
 	}
 
-	if user.ID == uuid.Nil {
+	if dbuser.ID == uuid.Nil {
 		// try bind by email
-		user, err = s.db.UserByEmail(ctx, extEmail)
+		dbuser, err = s.db.UserByEmail(ctx, extEmail)
 		if err != nil && !errors.Is(err, pgx.ErrNoRows) {
 			return dtos.UserSession{}, err
 		}
 	}
 
-	if user.ID == uuid.Nil {
+	if dbuser.ID == uuid.Nil {
 		// create new user
-		user, err := s.Register(ctx, dtos.UserRegister{
+		user, err = s.Register(ctx, dtos.UserRegister{
 			Email:    extEmail,
-			Username: extName,
+			Username: uuid.NewString(), // Randomly generate a username since we can't guarantee one from the provider is unique
 			Password: OAuthPasswordPlaceholder,
 		})
 		if err != nil {
+			s.l.Err(err).Msg("error creating user during oauth")
 			return dtos.UserSession{}, err
 		}
 
@@ -210,9 +215,51 @@ func (s *UserService) ProviderSession(
 			Metadata:       nil,
 		})
 		if err != nil {
+			s.l.Err(err).Msg("error creating provider during oauth")
 			return dtos.UserSession{}, err
 		}
 	}
 
-	return s.createSession(ctx, s.mapper.Map(user))
+	// At this point either User or DBUser should be valid
+	switch {
+	case dbuser.ID != uuid.Nil:
+		user = s.mapper.Map(dbuser)
+	case user.ID != uuid.Nil:
+		// do nothing
+	default:
+		panic("unable to resolve user during oauth validation")
+	}
+
+	return s.createSession(ctx, user)
+}
+
+func (s *UserService) ProviderStateGet(ctx context.Context) (string, error) {
+	token := hasher.NewToken()
+
+	err := s.db.ProviderStateCreate(ctx, db.ProviderStateCreateParams{
+		Token:     token.Hash,
+		ExpiresAt: time.Now().Add(time.Minute * 5),
+	})
+	if err != nil {
+		return "", err
+	}
+
+	return token.Raw, nil
+}
+
+func (s *UserService) ProviderStateUse(ctx context.Context, token string) error {
+	hash := hasher.HashToken(token)
+	return s.db.WithTx(ctx, func(qe *db.QueriesExt) error {
+		_, err := qe.ProviderStateGet(ctx, hash)
+		if err != nil {
+			return err
+		}
+
+		err = qe.ProviderStateDelete(ctx, hash)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
 }

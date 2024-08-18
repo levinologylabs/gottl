@@ -16,10 +16,6 @@ type GoogleAuthController struct {
 	cfg   providers.GoogleConfig
 }
 
-var (
-	statestring = "random"
-)
-
 func NewGoogleAuthController(l zerolog.Logger, cfg providers.GoogleConfig, store OauthSessionStore) *GoogleAuthController {
 	return &GoogleAuthController{
 		store: store,
@@ -29,7 +25,18 @@ func NewGoogleAuthController(l zerolog.Logger, cfg providers.GoogleConfig, store
 }
 
 func (gac *GoogleAuthController) Authenticate(w http.ResponseWriter, r *http.Request) {
-	// TODO: add state to session or cookie.
+	statestring, err := gac.store.ProviderStateGet(r.Context())
+	if err != nil {
+		gac.l.Err(err).
+			Msg("failed to get state string from provider")
+
+		_ = server.Error().
+			Status(http.StatusInternalServerError).
+			Msg("internal server error").
+			Write(r.Context(), w)
+		return
+	}
+
 	u := gac.cfg.OathConfig().AuthCodeURL(statestring)
 	http.Redirect(w, r, u, http.StatusTemporaryRedirect)
 }
@@ -43,8 +50,9 @@ func (gac *GoogleAuthController) Callback(w http.ResponseWriter, r *http.Request
 		code  = r.FormValue("code")
 	)
 
-	if state != statestring {
-		return fmt.Errorf("invalid oauth state")
+	err := gac.store.ProviderStateUse(r.Context(), state)
+	if err != nil {
+		return err
 	}
 
 	token, err := gac.cfg.OathConfig().Exchange(ctx, code)

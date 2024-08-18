@@ -43,6 +43,12 @@ type UserIdentityProvider struct {
 	Metadata       []byte
 }
 
+type UserIdentityProviderState struct {
+	ID        uuid.UUID
+	Token     []byte
+	ExpiresAt time.Time
+}
+
 type UserSession struct {
 	ID        uuid.UUID
 	CreatedAt time.Time
