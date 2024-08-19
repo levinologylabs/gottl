@@ -16,10 +16,10 @@ type worker struct {
 	db     *db.QueriesExt
 }
 
-func newWorker(l zerolog.Logger, services *db.QueriesExt, sender mailer.Sender) *worker {
+func newWorker(l zerolog.Logger, db *db.QueriesExt, sender mailer.Sender) *worker {
 	return &worker{
 		l:      l,
-		db:     services,
+		db:     db,
 		sender: sender,
 	}
 }
