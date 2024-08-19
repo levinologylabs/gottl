@@ -37,28 +37,28 @@ func (w *worker) run(ctx context.Context, ch <-chan tasks.Task) {
 	case task := <-ch:
 		switch task.ID {
 		case tasks.TaskIDSendEmail:
-			w.sendEmail(task)
+			w.sendEmail(ctx, task)
 		case tasks.TaskIDDeleteExpiredData:
-			w.deleteExpiredData(task)
+			w.deleteExpiredData(ctx, task)
 		}
 	}
 }
 
-func (w *worker) sendEmail(task tasks.Task) {
+func (w *worker) sendEmail(ctx context.Context, task tasks.Task) {
 	data, ok := task.Payload.(mailer.Message)
 	if !ok {
-		w.l.Error().Msg("invalid payload for email task")
+		w.l.Error().Ctx(ctx).Msg("invalid payload for email task")
 	}
 
 	err := w.sender.Send(data)
 	if err != nil {
-		w.l.Error().Err(err).
+		w.l.Error().Ctx(ctx).Err(err).
 			Str("email", data.To).
 			Str("subject", data.Subject).
 			Msg("failed to send email")
 	}
 }
 
-func (w *worker) deleteExpiredData(task tasks.Task) {
+func (w *worker) deleteExpiredData(ctx context.Context, task tasks.Task) {
 	panic("not implemented")
 }

@@ -51,6 +51,7 @@ func ErrorHandler(log zerolog.Logger) ErrorAdapter {
 			// that we don't leak any information to the client that
 			// is embedded in the error message.
 			bldr := server.Err(err).Msg("unknown error")
+			ctx := r.Context()
 
 			var respInvalidRouteKeyErr *validate.InvalidRouteKeyError
 			var respFieldErrorsErr validate.FieldErrors
@@ -72,12 +73,12 @@ func ErrorHandler(log zerolog.Logger) ErrorAdapter {
 			default:
 				bldr.Status(http.StatusInternalServerError).
 					Msg("internal server error")
-				log.Err(err).Type("type", err).Msg("unhandled error resulted in 500 response")
+				log.Err(err).Ctx(ctx).Type("type", err).Msg("unhandled error resulted in 500 response")
 			}
 
-			err = bldr.Write(r.Context(), w)
+			err = bldr.Write(ctx, w)
 			if err != nil {
-				log.Err(err).Msg("error writing response")
+				log.Err(err).Ctx(ctx).Msg("error writing response")
 			}
 		}
 	}

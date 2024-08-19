@@ -18,12 +18,12 @@ import (
 )
 
 type Web struct {
-	build    string
-	cfg      Config
-	server   *http.Server
-	logger   zerolog.Logger
-	os       *otel.OtelService
-	services *services.Service
+	build  string
+	cfg    Config
+	server *http.Server
+	l      zerolog.Logger
+	os     *otel.OtelService
+	s      *services.Service
 }
 
 func New(
@@ -34,11 +34,11 @@ func New(
 	services *services.Service,
 ) *Web {
 	w := &Web{
-		build:    build,
-		logger:   logger,
-		cfg:      conf,
-		os:       os,
-		services: services,
+		build: build,
+		l:     logger,
+		cfg:   conf,
+		os:    os,
+		s:     services,
 	}
 
 	mux := w.routes(build)
@@ -59,11 +59,11 @@ func New(
 func (web *Web) Start(ctx context.Context) error {
 	go func() {
 		<-ctx.Done()
-		web.logger.Info().Msg("shutting down web service")
+		web.l.Info().Ctx(ctx).Msg("shutting down web service")
 		_ = web.server.Shutdown(ctx)
 	}()
 
-	web.logger.Info().Msgf("starting web service on http://%s", web.cfg.Addr())
+	web.l.Info().Ctx(ctx).Msgf("starting web service on http://%s", web.cfg.Addr())
 	return web.server.ListenAndServe()
 }
 
@@ -75,7 +75,7 @@ func (web *Web) routes(build string) http.Handler {
 		middleware.RealIP,
 		middleware.CleanPath,
 		middleware.StripSlashes,
-		mid.Logger(web.logger),
+		mid.Logger(web.l),
 		middleware.AllowContentType("application/json", "text/plain", "text/html"),
 	)
 
@@ -90,7 +90,7 @@ func (web *Web) routes(build string) http.Handler {
 		MaxAge:           300, // Maximum value not ignored by any of major browsers
 	}))
 
-	adapter := mid.ErrorHandler(web.logger)
+	adapter := mid.ErrorHandler(web.l)
 
 	if web.cfg.EnableProfiler {
 		mux.Mount("/debug", middleware.Profiler())
@@ -99,7 +99,7 @@ func (web *Web) routes(build string) http.Handler {
 	mux.HandleFunc("GET /docs/swagger.json", adapter.Adapt(docs.SwaggerJSON))
 	mux.HandleFunc("GET /api/v1/info", adapter.Adapt(handlers.Info(dtos.StatusResponse{Build: build})))
 
-	userctrl := handlers.NewAuthController(web.services.Users, web.services.Passwords)
+	userctrl := handlers.NewAuthController(web.s.Users, web.s.Passwords)
 
 	mux.HandleFunc("POST /api/v1/users", adapter.Adapt(userctrl.Register))
 	mux.HandleFunc("POST /api/v1/users/login", adapter.Adapt(userctrl.Authenticate))
@@ -107,7 +107,7 @@ func (web *Web) routes(build string) http.Handler {
 	mux.HandleFunc("POST /api/v1/users/reset-password", adapter.Adapt(userctrl.ResetPassword))
 
 	mux.Group(func(r chi.Router) {
-		r.Use(mid.Authenticate(web.services.Users))
+		r.Use(mid.Authenticate(web.s.Users))
 
 		r.HandleFunc("GET /api/v1/users/self", adapter.Adapt(userctrl.Self))
 		r.HandleFunc("PATCH /api/v1/users/self", adapter.Adapt(userctrl.Update))
@@ -117,11 +117,11 @@ func (web *Web) routes(build string) http.Handler {
 
 	mux.Group(func(r chi.Router) {
 		r.Use(
-			mid.Authenticate(web.services.Users),
+			mid.Authenticate(web.s.Users),
 			mid.AuthorizeAdmin(),
 		)
 
-		admin := handlers.NewAdminController(web.services.Admin)
+		admin := handlers.NewAdminController(web.s.Admin)
 
 		r.HandleFunc("GET /api/v1/admin/users", adapter.Adapt(admin.GetAllUsers))
 	})

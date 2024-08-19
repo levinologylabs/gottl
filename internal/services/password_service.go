@@ -72,13 +72,13 @@ func (s *PasswordService) Reset(ctx context.Context, data dtos.PasswordReset) er
 			Now:    time.Now(),
 		})
 		if err != nil {
-			s.l.Error().Err(err).Msg("failed to get user action token")
+			s.l.Error().Ctx(ctx).Err(err).Msg("failed to get user action token")
 			return err
 		}
 
 		pwHash, err := hasher.HashPassword(data.Password)
 		if err != nil {
-			s.l.Error().Err(err).Msg("failed to hash password")
+			s.l.Error().Ctx(ctx).Err(err).Msg("failed to hash password")
 			return err
 		}
 
@@ -87,13 +87,13 @@ func (s *PasswordService) Reset(ctx context.Context, data dtos.PasswordReset) er
 			PasswordHash: &pwHash,
 		})
 		if err != nil {
-			s.l.Error().Err(err).Msg("failed to update user password")
+			s.l.Error().Ctx(ctx).Err(err).Msg("failed to update user password")
 			return err
 		}
 
 		err = s.db.UserActionTokenDelete(ctx, v.ID)
 		if err != nil {
-			s.l.Error().Err(err).Msg("failed to delete user action token")
+			s.l.Error().Ctx(ctx).Err(err).Msg("failed to delete user action token")
 			return err
 		}
 
