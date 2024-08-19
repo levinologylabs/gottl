@@ -3,7 +3,7 @@ logging {
   format = "logfmt"
 }
 
-// app config
+// gottl config
 local.file_match "gottl" {
      path_targets = [{"__path__" = "/logs/gottl.dev.log"}]
      sync_period = "1s"
@@ -24,12 +24,34 @@ loki.source.file "log_scrape" {
   tail_from_end = true
 }
 
+
+// container log config
+discovery.docker "linux" {
+  host = "unix:///var/run/docker.sock"
+}
+
+loki.source.docker "default" {
+  host       = "unix:///var/run/docker.sock"
+  targets    = discovery.docker.linux.targets
+  relabel_rules = loki.relabel.docker.rules
+  labels     = {"app" = "docker"}
+  forward_to = [loki.relabel.docker.receiver]
+}
+
+loki.relabel "docker" {
+  rule {
+    action = "replace"
+    regex = "/(.*)"
+    source_labels = ["__meta_docker_container_name"]
+    target_label = "container"
+  }
+
+  forward_to = [loki.write.grafana_loki.receiver]
+}
+
+// loki writer
 loki.write "grafana_loki" {
   endpoint {
     url = "http://loki:3100/loki/api/v1/push"
   }
 }
-
-
-// container config
-
