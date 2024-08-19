@@ -68,3 +68,38 @@ loki.write "grafana_loki" {
     url = "http://loki:3100/loki/api/v1/push"
   }
 }
+
+// gottl otel collector
+otelcol.receiver.otlp "default" {
+    grpc { }
+
+    http { }
+
+    output {
+        metrics = [otelcol.processor.memory_limiter.default.input]
+        traces  = [otelcol.processor.memory_limiter.default.input]
+    }
+}
+
+otelcol.processor.memory_limiter "default" {
+    check_interval   = "1s"
+    limit_percentage = 90
+    spike_limit_percentage = 20
+
+    output {
+        //metrics = [otelcol.exporter.prometheus.default.input]
+        traces  = [otelcol.exporter.otlp.tempo.input]
+    }
+}
+
+otelcol.exporter.otlp "tempo" {
+    client {
+        endpoint = "tempo:4317"
+        tls {
+          insecure = true
+        }
+    }
+}
+
+
+
