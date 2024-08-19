@@ -21,14 +21,14 @@ import (
 )
 
 type Config struct {
-	ServiceName string `conf:"default:gottl"`
 	Enabled     bool   `conf:"default:true"`
 	OTLPAddress string `conf:"default:localhost:4317"`
 	Secure      bool   `conf:"default:false"`
 }
 
 type OtelService struct {
-	logger         zerolog.Logger
+	ServiceName    string
+	l              zerolog.Logger
 	cfg            Config
 	shutdownFuncs  []func(context.Context) error
 	TraceProvider  *sdktrace.TracerProvider
@@ -41,10 +41,11 @@ var (
 	initResourcesOnce sync.Once
 )
 
-func NewOtelService(ctx context.Context, logger zerolog.Logger, cfg Config) *OtelService {
+func NewOtelService(ctx context.Context, logger zerolog.Logger, name string, cfg Config) *OtelService {
 	os := &OtelService{
-		logger: logger,
-		cfg:    cfg,
+		ServiceName: name,
+		l:           logger,
+		cfg:         cfg,
 	}
 	os.init(ctx)
 	return os
@@ -68,7 +69,7 @@ func (os *OtelService) init(ctx context.Context) {
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	)
 	if err != nil {
-		os.logger.Fatal().Msgf("Error establishing grpc connection: %v", err)
+		os.l.Fatal().Msgf("Error establishing grpc connection: %v", err)
 	}
 
 	os.TraceProvider = os.initTracerProvider(ctx, conn, os.Resource)
@@ -95,7 +96,7 @@ func (os *OtelService) Shutdown(ctx context.Context) error {
 func (os *OtelService) initTracerProvider(ctx context.Context, conn *grpc.ClientConn, res *sdkresource.Resource) *sdktrace.TracerProvider {
 	exporter, err := otlptracegrpc.New(ctx, otlptracegrpc.WithGRPCConn(conn))
 	if err != nil {
-		os.logger.Fatal().Msgf("new otlp trace exporter failed: %v", err)
+		os.l.Fatal().Msgf("new otlp trace exporter failed: %v", err)
 	}
 
 	tp := sdktrace.NewTracerProvider(
@@ -110,7 +111,7 @@ func (os *OtelService) initTracerProvider(ctx context.Context, conn *grpc.Client
 func (os *OtelService) initMeterProvider(ctx context.Context, conn *grpc.ClientConn, res *sdkresource.Resource) *sdkmetric.MeterProvider {
 	exporter, err := otlpmetricgrpc.New(ctx, otlpmetricgrpc.WithGRPCConn(conn))
 	if err != nil {
-		os.logger.Fatal().Msgf("new otlp metric http exporter failed: %v", err)
+		os.l.Fatal().Msgf("new otlp metric http exporter failed: %v", err)
 	}
 
 	mp := sdkmetric.NewMeterProvider(
@@ -126,7 +127,7 @@ func (os *OtelService) initResource(ctx context.Context) *sdkresource.Resource {
 		extraResources, _ := sdkresource.New(
 			ctx,
 			// temp, get this from the config
-			sdkresource.WithAttributes(semconv.ServiceNameKey.String(os.cfg.ServiceName)),
+			sdkresource.WithAttributes(semconv.ServiceNameKey.String(os.ServiceName)),
 			sdkresource.WithOS(),
 			sdkresource.WithProcess(),
 			sdkresource.WithContainer(),
