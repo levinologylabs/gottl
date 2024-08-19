@@ -87,9 +87,19 @@ otelcol.processor.memory_limiter "default" {
     spike_limit_percentage = 20
 
     output {
-        //metrics = [otelcol.exporter.prometheus.default.input]
+        metrics = [otelcol.exporter.prometheus.prometheus.input]
         traces  = [otelcol.exporter.otlp.tempo.input]
     }
+}
+
+otelcol.exporter.prometheus "prometheus" {
+  forward_to = [prometheus.remote_write.prometheus.receiver]
+}
+
+prometheus.remote_write "prometheus" {
+  endpoint {
+    url = "http://prometheus:9090/api/v1/push"
+  }
 }
 
 otelcol.exporter.otlp "tempo" {
