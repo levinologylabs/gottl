@@ -79,23 +79,6 @@ services:
     volumes:
       - $PWD/dev-stack/pyroscope/server.yaml:/etc/pyroscope/server.yaml
 
-  #opentelemetry-collector:
-  #  container_name: opentelemetry-collector
-  #  image: otel/opentelemetry-collector-contrib:latest
-  #  volumes:
-  #    - $PWD/dev-stack/opentelemetry-collector/otel-config.yaml:/etc/otel-config.yaml
-  #  ports:
-  #    # grpc
-  #    - "4317:4317"
-  #    # http
-  #    - "4318:4318"
-  #  command:
-  #    - "--config=/etc/otel-config.yaml"
-  #  depends_on:
-  #    - prometheus
-  #    - tempo
-  #    - loki
-
   alloy:
     container_name: alloy
     image: grafana/alloy:latest
@@ -110,7 +93,6 @@ services:
       - $PWD/logs/gottl.dev.log:/logs/gottl.dev.log
       - /var/lib/docker/containers:/var/lib/docker/containers:ro
       - /var/run/docker.sock:/var/run/docker.sock
-      - $PWD/dev-stack/opentelemetry-collector/otel-config.yaml:/etc/otel-config.yaml
     depends_on:
       - prometheus
       - tempo
