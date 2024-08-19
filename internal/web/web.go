@@ -69,9 +69,13 @@ func (web *Web) Start(ctx context.Context) error {
 
 func (web *Web) routes(build string) http.Handler {
 	mux := chi.NewRouter()
+	mux.Use(middleware.Recoverer)
+
+	if web.cfg.Otel.Enabled {
+		mux.Use(mid.Tracing(web.cfg.ServiceName, mux, web.os))
+	}
+
 	mux.Use(
-		middleware.Recoverer,
-		mid.Tracing("gottl", mux, web.os),
 		middleware.RealIP,
 		middleware.CleanPath,
 		middleware.StripSlashes,

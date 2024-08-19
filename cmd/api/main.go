@@ -57,7 +57,7 @@ func run() error {
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer cancel()
 
-	os := otel.NewOtelService(ctx, logger, cfg.Otel)
+	os := otel.NewOtelService(ctx, logger, cfg.Web.ServiceName, cfg.Web.Otel)
 	defer func() {
 		if err := os.Shutdown(ctx); err != nil {
 			logger.Debug().Ctx(ctx).Msgf("Error shutting down otel: %v", err)
