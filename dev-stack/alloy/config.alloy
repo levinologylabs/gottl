@@ -18,8 +18,8 @@ loki.source.file "log_scrape" {
 loki.process "gottl" {
   stage.static_labels {
     values = {
-      app = "gottl"
-      container = "gottl"
+      app = "gottl",
+      container = "gottl",
     }
   }
   forward_to = [loki.write.grafana_loki.receiver]
