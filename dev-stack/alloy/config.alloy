@@ -3,20 +3,11 @@ logging {
   format = "logfmt"
 }
 
-// gottl config
+// collect gottl logs from file
 local.file_match "gottl" {
      path_targets = [{"__path__" = "/logs/gottl.dev.log"}]
      sync_period = "1s"
  }
-
-loki.process "gottl" {
-  stage.static_labels {
-    values = {
-      app = "gottl",
-    }
-  }
-  forward_to = [loki.write.grafana_loki.receiver]
-}
 
 loki.source.file "log_scrape" {
   targets    = local.file_match.gottl.targets
@@ -24,8 +15,18 @@ loki.source.file "log_scrape" {
   tail_from_end = true
 }
 
+loki.process "gottl" {
+  stage.static_labels {
+    values = {
+      app = "gottl"
+      container = "gottl"
+    }
+  }
+  forward_to = [loki.write.grafana_loki.receiver]
+}
 
-// container log config
+
+// collect container logs from docker socket
 discovery.docker "linux" {
   host = "unix:///var/run/docker.sock"
 }
@@ -44,6 +45,18 @@ loki.relabel "docker" {
     regex = "/(.*)"
     source_labels = ["__meta_docker_container_name"]
     target_label = "container"
+  }
+
+  rule {
+    action = "replace"
+    source_labels = ["__meta_docker_container_log_stream"]
+    target_label = "logstream"
+  }
+
+  rule {
+    action = "replace"
+    source_labels = ["__meta_docker_container_label_logging_jobname"]
+    target_label = "job"
   }
 
   forward_to = [loki.write.grafana_loki.receiver]

@@ -108,6 +108,8 @@ services:
     volumes:
       - $PWD/dev-stack/alloy/config.alloy:/etc/alloy/config.alloy
       - $PWD/logs/gottl.dev.log:/logs/gottl.dev.log
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock
     command: <|
       run
       --server.http.listen-addr=0.0.0.0:12345
