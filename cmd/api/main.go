@@ -60,7 +60,7 @@ func run() error {
 	os := otel.NewOtelService(ctx, logger, cfg.Otel)
 	defer func() {
 		if err := os.Shutdown(ctx); err != nil {
-			logger.Debug().Msgf("Error shutting down otel: %v", err)
+			logger.Debug().Ctx(ctx).Msgf("Error shutting down otel: %v", err)
 		}
 	}()
 
@@ -74,7 +74,7 @@ func run() error {
 
 	defer func() {
 		if err := queries.Close(ctx); err != nil {
-			logger.Error().Err(err).Msg("closing queries")
+			logger.Error().Ctx(ctx).Err(err).Msg("closing queries")
 		}
 	}()
 
@@ -89,7 +89,7 @@ func run() error {
 		defer wg.Done()
 		err := apisvr.Start(ctx)
 		if err != nil && !errors.Is(err, http.ErrServerClosed) {
-			logger.Error().Err(err).Msg("server error")
+			logger.Error().Ctx(ctx).Err(err).Msg("server error")
 		}
 	}()
 

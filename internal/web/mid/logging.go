@@ -19,10 +19,11 @@ func (s *spy) WriteHeader(status int) {
 func Logger(l zerolog.Logger) func(http.Handler) http.Handler {
 	return func(h http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			l.Info().Ctx(r.Context()).Str("method", r.Method).Str("path", r.URL.Path).Msg("->")
+			ctx := r.Context()
+			l.Info().Ctx(ctx).Str("method", r.Method).Str("path", r.URL.Path).Msg("->")
 			s := &spy{ResponseWriter: w}
 			h.ServeHTTP(s, r)
-			l.Info().Ctx(r.Context()).Str("method", r.Method).Str("path", r.URL.Path).Int("status", s.status).Msg("<-")
+			l.Info().Ctx(ctx).Str("method", r.Method).Str("path", r.URL.Path).Int("status", s.status).Msg("<-")
 		})
 	}
 }

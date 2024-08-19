@@ -60,12 +60,12 @@ func (s *UserService) Authenticate(ctx context.Context, data dtos.UserAuthentica
 		savedHash := "$argon2id$v=19$m=65536,t=1,p=8$r14KLB8NUVfFFccYbU1q9w$tJ3HvNwMED2dL3lALmOdkm46TVuB9vGcEjy9sxTAE6s"
 		hasher.CheckPasswordHash(data.Password, savedHash)
 
-		s.l.Error().Err(err).Str("email", data.Email).Msg("failed to get user by email")
+		s.l.Error().Ctx(ctx).Err(err).Str("email", data.Email).Msg("failed to get user by email")
 		return dtos.UserSession{}, ErrInvalidLogin
 	}
 
 	if !hasher.CheckPasswordHash(data.Password, dbuser.PasswordHash) {
-		s.l.Error().Err(err).Str("email", data.Email).Msg("password verification failed")
+		s.l.Error().Ctx(ctx).Err(err).Str("email", data.Email).Msg("password verification failed")
 		return dtos.UserSession{}, ErrInvalidLogin
 	}
 
