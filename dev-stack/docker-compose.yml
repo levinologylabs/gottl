@@ -11,8 +11,6 @@ services:
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_USER=postgres
       - POSTGRES_DB=postgers
-    labels:
-      logging: "alloy"
 
   caddy:
     container_name: caddy
@@ -26,8 +24,6 @@ services:
       - "80:80"
     extra_hosts:
       - "host.docker.internal:host-gateway"
-    labels:
-      logging: "alloy"
 
   grafana:
     container_name: grafana
