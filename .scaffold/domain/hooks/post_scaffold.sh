@@ -1,4 +1,4 @@
 #!/bin/bash
 task sqlc
 task fmt
-task swag
+task swag --force
