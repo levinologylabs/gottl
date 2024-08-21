@@ -80,3 +80,15 @@ ORDER BY
     id
 LIMIT
     $1 OFFSET $2;
+
+-- name: UserByProvider :one
+SELECT
+    users.*
+FROM
+    users
+    JOIN user_identity_providers ON users.id = user_identity_providers.user_id
+WHERE
+    user_identity_providers.provider_name = $1
+    AND user_identity_providers.provider_user_id = $2
+LIMIT
+    1;

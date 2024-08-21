@@ -34,6 +34,21 @@ type UserActionToken struct {
 	Action    string
 }
 
+type UserIdentityProvider struct {
+	ID             uuid.UUID
+	CreatedAt      time.Time
+	UserID         uuid.UUID
+	ProviderName   string
+	ProviderUserID string
+	Metadata       []byte
+}
+
+type UserIdentityProviderState struct {
+	ID        uuid.UUID
+	Token     []byte
+	ExpiresAt time.Time
+}
+
 type UserSession struct {
 	ID        uuid.UUID
 	CreatedAt time.Time

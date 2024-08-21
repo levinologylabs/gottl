@@ -68,6 +68,43 @@ func (q *Queries) UserByID(ctx context.Context, id uuid.UUID) (User, error) {
 	return i, err
 }
 
+const userByProvider = `-- name: UserByProvider :one
+SELECT
+    users.id, users.created_at, users.updated_at, users.username, users.email, users.password_hash, users.is_admin, users.stripe_customer_id, users.stripe_subscription_id, users.subscription_start_date, users.subscription_ended_date
+FROM
+    users
+    JOIN user_identity_providers ON users.id = user_identity_providers.user_id
+WHERE
+    user_identity_providers.provider_name = $1
+    AND user_identity_providers.provider_user_id = $2
+LIMIT
+    1
+`
+
+type UserByProviderParams struct {
+	ProviderName   string
+	ProviderUserID string
+}
+
+func (q *Queries) UserByProvider(ctx context.Context, arg UserByProviderParams) (User, error) {
+	row := q.db.QueryRow(ctx, userByProvider, arg.ProviderName, arg.ProviderUserID)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Username,
+		&i.Email,
+		&i.PasswordHash,
+		&i.IsAdmin,
+		&i.StripeCustomerID,
+		&i.StripeSubscriptionID,
+		&i.SubscriptionStartDate,
+		&i.SubscriptionEndedDate,
+	)
+	return i, err
+}
+
 const userCreate = `-- name: UserCreate :one
 INSERT INTO
     users (username, email, password_hash)

@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/jalevin/gottl/internal/core/hasher"
 	"github.com/jalevin/gottl/internal/data/db"
 	"github.com/jalevin/gottl/internal/data/dtos"
@@ -162,4 +163,104 @@ func (s *UserService) UpdateSubscription(ctx context.Context, id uuid.UUID, data
 	}
 
 	return s.mapper.Map(v), nil
+}
+
+const OAuthPasswordPlaceholder = "ProviderOnlyUser"
+
+// ProviderSession creates a new session for a user that has authenticated with a third-party.
+func (s *UserService) ProviderSession(
+	ctx context.Context,
+	providerName string,
+	extID string,
+	extEmail string,
+	extName string,
+) (dtos.UserSession, error) {
+	var (
+		err    error
+		dbuser db.User
+		user   dtos.User
+	)
+
+	// try get user by extID
+	dbuser, err = s.db.UserByProvider(ctx, db.UserByProviderParams{
+		ProviderName:   providerName,
+		ProviderUserID: extID,
+	})
+	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
+		return dtos.UserSession{}, err
+	}
+
+	if dbuser.ID == uuid.Nil {
+		// try bind by email
+		dbuser, err = s.db.UserByEmail(ctx, extEmail)
+		if err != nil && !errors.Is(err, pgx.ErrNoRows) {
+			return dtos.UserSession{}, err
+		}
+	}
+
+	if dbuser.ID != uuid.Nil {
+		user = s.mapper.Map(dbuser)
+	}
+
+	// If the user is still a zero value at this point, we need to create a new user
+	// and bind the provider to that user.
+	if user.ID == uuid.Nil {
+		user, err = s.Register(ctx, dtos.UserRegister{
+			Email:    extEmail,
+			Username: uuid.NewString(), // Randomly generate a username since we can't guarantee one from the provider is unique
+			Password: OAuthPasswordPlaceholder,
+		})
+		if err != nil {
+			s.l.Err(err).Msg("error creating user during oauth")
+			return dtos.UserSession{}, err
+		}
+
+		_, err = s.db.CreateProvider(ctx, db.CreateProviderParams{
+			UserID:         user.ID,
+			ProviderName:   providerName,
+			ProviderUserID: extID,
+			Metadata:       nil,
+		})
+		if err != nil {
+			s.l.Err(err).Msg("error creating provider during oauth")
+			return dtos.UserSession{}, err
+		}
+	}
+
+	if user.ID == uuid.Nil {
+		panic("unable to resolve user during oauth validation")
+	}
+
+	return s.createSession(ctx, user)
+}
+
+func (s *UserService) ProviderStateGet(ctx context.Context) (string, error) {
+	token := hasher.NewToken()
+
+	err := s.db.ProviderStateCreate(ctx, db.ProviderStateCreateParams{
+		Token:     token.Hash,
+		ExpiresAt: time.Now().Add(time.Minute * 5),
+	})
+	if err != nil {
+		return "", err
+	}
+
+	return token.Raw, nil
+}
+
+func (s *UserService) ProviderStateUse(ctx context.Context, token string) error {
+	hash := hasher.HashToken(token)
+	return s.db.WithTx(ctx, func(qe *db.QueriesExt) error {
+		_, err := qe.ProviderStateGet(ctx, hash)
+		if err != nil {
+			return err
+		}
+
+		err = qe.ProviderStateDelete(ctx, hash)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
 }
