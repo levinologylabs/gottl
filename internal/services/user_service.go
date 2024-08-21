@@ -175,9 +175,11 @@ func (s *UserService) ProviderSession(
 	extEmail string,
 	extName string,
 ) (dtos.UserSession, error) {
-	var dbuser db.User
-	var err error
-	var user dtos.User
+	var (
+		err    error
+		dbuser db.User
+		user   dtos.User
+	)
 
 	// try get user by extID
 	dbuser, err = s.db.UserByProvider(ctx, db.UserByProviderParams{
@@ -196,8 +198,13 @@ func (s *UserService) ProviderSession(
 		}
 	}
 
-	if dbuser.ID == uuid.Nil {
-		// create new user
+	if dbuser.ID != uuid.Nil {
+		user = s.mapper.Map(dbuser)
+	}
+
+	// If the user is still a zero value at this point, we need to create a new user
+	// and bind the provider to that user.
+	if user.ID == uuid.Nil {
 		user, err = s.Register(ctx, dtos.UserRegister{
 			Email:    extEmail,
 			Username: uuid.NewString(), // Randomly generate a username since we can't guarantee one from the provider is unique
@@ -220,13 +227,7 @@ func (s *UserService) ProviderSession(
 		}
 	}
 
-	// At this point either User or DBUser should be valid
-	switch {
-	case dbuser.ID != uuid.Nil:
-		user = s.mapper.Map(dbuser)
-	case user.ID != uuid.Nil:
-		// do nothing
-	default:
+	if user.ID == uuid.Nil {
 		panic("unable to resolve user during oauth validation")
 	}
 
