@@ -19,7 +19,7 @@ func New{{ .Computed.domain_var }}Controller(service *services.{{ .Computed.doma
   }
 }
 
-// {{ .Computed.domain_var }}List godoc
+// GetAll godoc
 //
 // @Tags      {{ .Computed.domain_var }}
 // @Summary   List all {{ .Computed.domain_var }}s
@@ -42,7 +42,7 @@ func (uc *{{ .Computed.domain_var }}Controller) GetAll(w http.ResponseWriter, r 
   return server.JSON(w, http.StatusOK, entities)
 }
 
-// {{ .Computed.domain_var }}Get godoc
+// Get godoc
 //
 // @Tags      {{ .Computed.domain_var }}
 // @Summary   Get a {{ .Computed.domain_var }}
@@ -67,7 +67,7 @@ func (uc *{{ .Computed.domain_var }}Controller) Get(w http.ResponseWriter, r *ht
 }
 
 
-// {{ .Computed.domain_var }}Create godoc
+// Create godoc
 //
 // @Tags      {{ .Computed.domain_var }}
 // @Summary   Create a new {{ .Computed.domain_var }}
@@ -91,7 +91,7 @@ func (uc *{{ .Computed.domain_var }}Controller) Create(w http.ResponseWriter, r 
   return server.JSON(w, http.StatusCreated, entity)
 }
 
-// {{ .Computed.domain_var }}Update godoc
+// Update godoc
 //
 // @Tags      {{ .Computed.domain_var }}
 // @Summary   Update a {{ .Computed.domain_var }}
@@ -116,7 +116,7 @@ func (uc *{{ .Computed.domain_var }}Controller) Update(w http.ResponseWriter, r 
   return server.JSON(w, http.StatusOK, entity)
 }
 
-// {{ .Computed.domain_var }}Delete godoc
+// Delete godoc
 //
 // @Tags      {{ .Computed.domain_var }}
 // @Summary   Delete a {{ .Computed.domain_var }}

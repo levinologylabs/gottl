@@ -2,16 +2,15 @@
 SELECT
     *
 FROM
-    {{ .Computed.sql_table }}
+    {{ .Scaffold.sql_table }}
 WHERE
     id = $1;
-
 
 -- name: {{ .Computed.domain_var }}GetAll :many
 SELECT
     *
 FROM
-    {{ .Computed.sql_table }}
+    {{ .Scaffold.sql_table }}
 ORDER BY
     created_at
 LIMIT
@@ -21,10 +20,22 @@ LIMIT
 SELECT
     COUNT(*)
 FROM
-    {{ .Computed.sql_table }};
+    {{ .Scaffold.sql_table }};
 
 -- name: {{ .Computed.domain_var }}DeleteByID :exec
 DELETE FROM
-    {{ .Computed.sql_table }}
+    {{ .Scaffold.sql_table }}
 WHERE
     id = $1;
+{{ if .Scaffold.user_relation }}
+-- name: {{ .Computed.domain_var }}GetAllByUserID :many
+SELECT
+    *
+FROM
+    {{ .Scaffold.sql_table }}
+WHERE
+    user_id = $1
+ORDER BY
+    created_at
+LIMIT
+    $2 OFFSET $3;{{ end }}
