@@ -28,7 +28,7 @@ DELETE FROM
 WHERE
     id = $1;
 {{ if .Scaffold.user_relation }}
--- name: {{ .Computed.domain_var }}GetAllByUserID :many
+-- name: {{ .Computed.domain_var }}GetAllByUser :many
 SELECT
     *
 FROM
@@ -38,4 +38,13 @@ WHERE
 ORDER BY
     created_at
 LIMIT
-    $2 OFFSET $3;{{ end }}
+    $2 OFFSET $3;
+
+-- name: {{ .Computed.domain_var }}GetAllByUserCount :one
+SELECT
+    COUNT(*)
+FROM
+    {{ .Scaffold.sql_table }}
+WHERE
+    user_id = $1;
+{{ end }}

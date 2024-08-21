@@ -53,6 +53,29 @@ func (s *{{ .Computed.domain_var}}Service) GetAll(ctx context.Context, page dtos
   }, nil
 }
 
+{{ if .Scaffold.user_relation }}
+func (s *{{ .Computed.domain_var}}Service) GetAllByUser(ctx context.Context, userID uuid.UUID, page dtos.Pagination) (dtos.PaginationResponse[dtos.{{ .Computed.domain_var }}], error) {
+  count, err := s.db.{{ .Computed.domain_var }}GetAllByUserCount(ctx, userID)
+  if err != nil {
+    return dtos.PaginationResponse[dtos.{{ .Computed.domain_var }}]{}, err
+  }
+
+  entities, err := s.db.{{ .Computed.domain_var }}GetAllByUser(ctx, db.{{ .Computed.domain_var }}GetAllByUserParams{
+    UserID: userID,
+    Limit:  int32(page.Limit),
+    Offset: int32(page.Skip),
+  })
+  if err != nil {
+    return dtos.PaginationResponse[dtos.{{ .Computed.domain_var }}]{}, err
+  }
+
+  return dtos.PaginationResponse[dtos.{{ .Computed.domain_var }}]{
+    Total: int(count),
+    Items: s.mapper.Slice(entities),
+  }, nil
+}
+{{ end }}
+
 func (s *{{ .Computed.domain_var}}Service) Create(ctx context.Context, data dtos.{{ .Computed.domain_var }}Create) (dtos.{{ .Computed.domain_var }}, error) {
   panic("not implemented")
 }
