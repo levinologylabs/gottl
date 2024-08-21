@@ -115,8 +115,8 @@ func (web *Web) routes(build string) http.Handler {
 	}
 
 	if web.cfg.Auth.IsGoogleEnabled() {
-		web.logger.Info().Msg("google oauth enabled")
-		google := oauthhandler.NewGoogleAuthController(web.logger, web.cfg.Auth.Google, web.services.Users)
+		web.l.Info().Msg("google oauth enabled")
+		google := oauthhandler.NewGoogleAuthController(web.l, web.cfg.Auth.Google, web.s.Users)
 
 		mux.HandleFunc("GET /auth/login/google", google.Authenticate)
 		mux.HandleFunc("GET /auth/callback/google", adapter.Adapt(google.Callback))
