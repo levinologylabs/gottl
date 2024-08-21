@@ -26,6 +26,7 @@ questions:
 computed:
   domain_var: "{{ .Scaffold.domain_name | toPascalCase }}"
   domain_kebab: "{{ .Scaffold.domain_name | kebabcase }}"
+  sql_table: "{{ .Scaffold.domain_name | snakecase }}s"
 
 rewrites:
   - from: "templates/dtos.go"
@@ -34,6 +35,8 @@ rewrites:
     to: "internal/services/{{ .Scaffold.domain_name | snakecase }}_service.go"
   - from: "templates/handlers.go"
     to: "internal/web/handlers/{{ .Scaffold.domain_name | snakecase }}_handler.go"
+  - from: "templates/queries.sql"
+    to: "internal/data/db/{{ .Scaffold.domain_name | snakecase }}.sql"
 
 inject:
   - at: "// $scaffold_inject_service"
