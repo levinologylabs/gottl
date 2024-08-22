@@ -21,11 +21,21 @@ questions:
   - name: domain_name
     prompt:
       message: Domain Name
-      description: The name of the domain enttiy (e.g. Post) - do not pluralize
+      description: The name of the domain entity in singular form (e.g. Post)
+  - name: sql_table
+    prompt:
+      message: SQL Table Name
+      description: The name of the SQL table for the domain entity (e.g. user_posts)
+  - name: user_relation
+    prompt:
+      confirm: User Relation # duplicate because of scaffold bug
+      message: User Relation
+      description: Does this domain entity have a user relation? (e.g. user_id)
 
 computed:
   domain_var: "{{ .Scaffold.domain_name | toPascalCase }}"
   domain_kebab: "{{ .Scaffold.domain_name | kebabcase }}"
+  sql_table: "{{ .Scaffold.sql_table }}"
 
 rewrites:
   - from: "templates/dtos.go"
@@ -34,6 +44,10 @@ rewrites:
     to: "internal/services/{{ .Scaffold.domain_name | snakecase }}_service.go"
   - from: "templates/handlers.go"
     to: "internal/web/handlers/{{ .Scaffold.domain_name | snakecase }}_handler.go"
+  - from: "templates/queries.sql"
+    to: "internal/data/db/{{ .Scaffold.domain_name | snakecase }}.sql"
+  - from: "templates/migrations.sql"
+    to: "internal/data/db/migrations/sql/{{ now | date \"20060102150405\" }}_{{ .Scaffold.domain_name | snakecase }}.sql"
 
 inject:
   - at: "// $scaffold_inject_service"
@@ -54,7 +68,7 @@ inject:
     template: |+
       {{ $ctrl := .Scaffold.domain_name | camelcase  }}
 
-      {{ $ctrl }}Ctrl := handlers.New{{ .Scaffold.domain_name | toPascalCase }}Controller(web.services.{{ .Scaffold.domain_name | toPascalCase }}s)
+      {{ $ctrl }}Ctrl := handlers.New{{ .Scaffold.domain_name | toPascalCase }}Controller(web.s.{{ .Scaffold.domain_name | toPascalCase }}s)
 
       r.HandleFunc("GET /api/v1/{{ .Computed.domain_kebab }}s" , adapter.Adapt({{ $ctrl }}Ctrl.GetAll))
       r.HandleFunc("POST /api/v1/{{ .Computed.domain_kebab }}s" , adapter.Adapt({{ $ctrl }}Ctrl.Create))
