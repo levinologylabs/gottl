@@ -101,3 +101,9 @@ tasks:
     cmds:
       - swag fmt --dir=./internal
       - swag init --outputTypes=json -g ./cmd/api/main.go --output=./internal/web/docs/ -dir=./,./internal/data/dtos
+
+  docs:
+    desc: Generate swagger docs
+    dir: ./docs
+    cmds:
+      - npm run dev
