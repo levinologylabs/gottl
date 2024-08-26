@@ -2,6 +2,7 @@ import { defineConfig } from 'vitepress'
 
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
+  base: process.env.VITEPRESS_BASE || '/',
   title: "Gottl",
   description: "A Go JSON API Starter Kit",
   themeConfig: {
