@@ -25,6 +25,8 @@ jobs:
 
       - name: Install and Build
         if: github.event.action != 'closed' # You might want to skip the build if the PR has been closed
+        env:
+          VITEPRESS_BASE: /gottl/pr-preview/pr-${{ github.event.number }}
         working-directory: ./docs
         run: |
           npm install
