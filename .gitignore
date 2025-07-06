@@ -24,3 +24,7 @@ go.work.sum
 bin/
 .task/
 .env
+
+node_modules/
+**/.vitepress/cache/
+**/.vitepress/dist/
